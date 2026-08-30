@@ -6,7 +6,7 @@
  * WPL17 has TWO CAN buses:
  *  - CAN-A (20 kbps): heating-level data (Vorlauf/Ruecklauf/Aussentemp/Verdichter),
  *    Kessel=0x180, Manager=0x480, Heizmodul=0x500.
- *  - CAN-B (X1.2, 50 kbps): the COMPORT level — Speicher-Ist-Temp, Raum-Soll-Temp,
+ *  - CAN-B (X1.2, 50 kbps): the COMFORT level — Speicher-Ist-Temp, Raum-Soll-Temp,
  *    Heizkurve, Energien, Betriebsmodus. THIS is where the ISG-Web is connected
  *    and where the values the display shows are readable.
  *
@@ -14,18 +14,24 @@
  * `can_bit_rate: 50kbps` in heatingpump.yaml substitutions.
  *
  * The CAN-B member addresses (verified on a real WPL17 ICS classic):
- *   KESSEL_CANB  0x201  — Speicheristtemp, Raumsolltemp, Heizkurve, Aussentemp
- *   MANAGER_CANB 0x480  — Programm-Schalter, Sommerbetrieb, Raumsolltemp, Heizkurve
+ *   KESSEL_CANB  0x201  — Speicher-Ist/Soll-Temp, Raum-Soll-Temp, Heizkurve, Aussentemp
+ *   MANAGER_CANB 0x480  — Programm-Schalter, Sommerbetrieb, Speicher-Soll, Raum-Soll, Heizkurve
  *   HEIZMODUL_CANB 0x500 — Energien (Strom/Waerme MWh+kWh), Verdichter, Vorlauf/Ruecklauf
  *
  * Known facts from real hardware scan:
- *  - SPEICHERISTTEMP, RAUMSOLLTEMP_I (= Komforttemp), RAUMSOLLTEMP_NACHT (= Eco temp),
- *    HEIZKURVE (= Steigung, e.g. 0.40), AUSSENTEMP, WPVORLAUFIST, RUECKLAUFISTTEMP,
- *    VERDICHTER and the energy counters are all readable.
+ *  - SPEICHERISTTEMP, EINSTELL_SPEICHERSOLLTEMP, RAUMSOLLTEMP_I (= Komforttemp),
+ *    RAUMSOLLTEMP_NACHT (= Eco temp), HEIZKURVE (= Steigung, e.g. 0.40), AUSSENTEMP,
+ *    WPVORLAUFIST, RUECKLAUFISTTEMP, VERDICHTER and the energy counters are all readable.
  *  - RAUMSOLLTEMP_II / _III return -255: this unit has only 1 heating circuit.
- *  - Cooling registers (KUEHLMODE, KUEHL_RAUMSOLL_*) return -255 until the cooling
- *    function is enabled on the display (menu > code 1000) AND the WPM is in
- *    Sommerbetrieb. They are built-in but disabled by default.
+ *  - Cooling registers (KUEHLMODE, KUEHL_RAUMSOLL_*, KUEHL_VORLAUFSOLLTEMP,
+ *    KUEHL_FREIGABE_TEMPERATUR) return -255 until the cooling function is enabled on
+ *    the display (menu > code 1000) AND the WPM is in Sommerbetrieb. They are
+ *    built-in but disabled by default.
+ *
+ * Writables (HEIZKURVE, EINSTELL_SPEICHERSOLLTEMP, RAUMSOLLTEMP_I/NACHT,
+ * PROGRAMMSCHALTER) are defined in ha-stiebel-control.h writableNumbers[] /
+ * writableSelects[] and are addressed via the MQTT set-topics; the read-requests
+ * here keep their state_topics populated.
  */
 
 #ifndef SIGNAL_REQUESTS_WPL17_H
@@ -42,16 +48,20 @@ extern const SignalRequest signalRequests[] = {
     // ========================================================================
     {"AUSSENTEMP",                 FREQ_30S,   cm_kessel_canb},
     {"SPEICHERISTTEMP",            FREQ_30S,   cm_kessel_canb},
+    {"SPEICHERSOLLTEMP",           FREQ_1MIN,  cm_kessel_canb},
+    {"EINSTELL_SPEICHERSOLLTEMP",  FREQ_1MIN,  cm_kessel_canb},
     {"RAUMSOLLTEMP_I",             FREQ_1MIN,  cm_kessel_canb},   // Komforttemperatur
     {"RAUMSOLLTEMP_NACHT",         FREQ_1MIN,  cm_kessel_canb},   // Eco-Temperatur
     {"HEIZKURVE",                  FREQ_10MIN, cm_kessel_canb},   // Steigung (et_cent_val, 0.40)
 
     // ========================================================================
-    // WPL17 (CAN-B): MANAGER_CANB (0x480) — Betriebsmodus + Raum/Heizkurve
+    // WPL17 (CAN-B): MANAGER_CANB (0x480) — Betriebsmodus + Speicher/Raum/Heizkurve
     // ========================================================================
     {"PROGRAMMSCHALTER",           FREQ_1MIN,  cm_manager_canb},  // Automatik/Tagbetrieb/etc.
     {"SOMMERBETRIEB",              FREQ_1MIN,  cm_manager_canb},  // Heizung aus, nur WW (on/off)
+    {"EINSTELL_SPEICHERSOLLTEMP",  FREQ_1MIN,  cm_manager_canb},
     {"RAUMSOLLTEMP_I",             FREQ_1MIN,  cm_manager_canb},
+    {"RAUMSOLLTEMP_NACHT",         FREQ_1MIN,  cm_manager_canb},
     {"HEIZKURVE",                  FREQ_10MIN, cm_manager_canb},
 
     // ========================================================================
@@ -74,12 +84,21 @@ extern const SignalRequest signalRequests[] = {
     {"WAERMEERTRAG_WW_SUM_KWH",          FREQ_10MIN, cm_heizmodul_canb},
 
     // ========================================================================
+    // WPL17 (CAN-B): LEGIONELLEN-SCHUTZ (Anti-Legionellen Zeitpunkt)
+    // ========================================================================
+    {"ANTILEGIONELLEN_ZEITPUNKT",  FREQ_1MIN,  cm_manager_canb},
+
+    // ========================================================================
     // WPL17 (CAN-B): Kuehl-Register — vorhanden, aber default deaktiviert.
     // Liefern -255 bis die Kuehlfunktion am Display (Code 1000) freigeschaltet ist.
     // ========================================================================
     {"KUEHLMODE",                 FREQ_10MIN, cm_kessel_canb},
+    {"KUEHLMODE",                 FREQ_10MIN, cm_manager_canb},
     {"KUEHL_RAUMSOLL_TAG",        FREQ_10MIN, cm_kessel_canb},
+    {"KUEHL_RAUMSOLL_TAG",        FREQ_10MIN, cm_manager_canb},
     {"KUEHL_RAUMSOLL_NACHT",      FREQ_10MIN, cm_kessel_canb},
+    {"KUEHL_VORLAUFSOLLTEMP",     FREQ_10MIN, cm_kessel_canb},
+    {"KUEHL_FREIGABE_TEMPERATUR", FREQ_10MIN, cm_kessel_canb},
 };
 
 extern const size_t SIGNAL_REQUEST_COUNT_VALUE = sizeof(signalRequests) / sizeof(SignalRequest);

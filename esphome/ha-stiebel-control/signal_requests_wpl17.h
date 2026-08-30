@@ -1,29 +1,31 @@
 /*
  * Signal Request Table — WPL17 Heat Pump
  *
- * UNVERIFIED ON REAL HARDWARE. Ported from community project
- * kr0ner/OneESP32ToRuleThemAll, re-implemented against this project's
- * ElsterTable.h/signal_requests conventions — no code or YAML was copied
- * verbatim. This is a curated subset of the source project's WPL17 signals:
- * temperatures, pressures/flow, fan/compressor speed, PID/EXV control,
- * runtime counters, and operating state. Deliberately excludes raw relay
- * outputs (RELAIS_X_2_*), stepper-motor phases, and X1 terminal config
- * registers — internal wiring/calibration details, not monitoring data.
+ * VERIFIED ON REAL HARDWARE (CAN-B, X1.2, 50 kbps, 2026-08-30).
  *
- * IMPORTANT: WPL17 runs its CAN bus at 50kbps, not the project default of
- * 20kbps. Set `can_bit_rate: 50kbps` in your heatingpump.yaml substitutions
- * when using this model — see can_esp32.yaml/can_mcp2515.yaml.
+ * WPL17 has TWO CAN buses:
+ *  - CAN-A (20 kbps): heating-level data (Vorlauf/Ruecklauf/Aussentemp/Verdichter),
+ *    Kessel=0x180, Manager=0x480, Heizmodul=0x500.
+ *  - CAN-B (X1.2, 50 kbps): the COMPORT level — Speicher-Ist-Temp, Raum-Soll-Temp,
+ *    Heizkurve, Energien, Betriebsmodus. THIS is where the ISG-Web is connected
+ *    and where the values the display shows are readable.
  *
- * CAN targets per the source project: Kessel (0x180), Manager (0x480),
- * Heizmodul at 0x514 (cm_heizmodul_wpl — NOT the default HEIZMODUL/0x500),
- * FET (0x402, room control unit), and HK1 (0x601, reusing our existing
- * MISCHERMODUL_2/cm_mischermodul_2 — same physical address, different name
- * in the source project).
+ * To use the WPL17 with this project, connect to CAN-B and set
+ * `can_bit_rate: 50kbps` in heatingpump.yaml substitutions.
  *
- * Several signals below reuse existing ElsterTable rows whose Name doesn't
- * match the source project's name for the same Index — these are very
- * likely the same underlying Elster signal under an older/different label
- * from the original 2014 table. Low-confidence matches are flagged inline.
+ * The CAN-B member addresses (verified on a real WPL17 ICS classic):
+ *   KESSEL_CANB  0x201  — Speicheristtemp, Raumsolltemp, Heizkurve, Aussentemp
+ *   MANAGER_CANB 0x480  — Programm-Schalter, Sommerbetrieb, Raumsolltemp, Heizkurve
+ *   HEIZMODUL_CANB 0x500 — Energien (Strom/Waerme MWh+kWh), Verdichter, Vorlauf/Ruecklauf
+ *
+ * Known facts from real hardware scan:
+ *  - SPEICHERISTTEMP, RAUMSOLLTEMP_I (= Komforttemp), RAUMSOLLTEMP_NACHT (= Eco temp),
+ *    HEIZKURVE (= Steigung, e.g. 0.40), AUSSENTEMP, WPVORLAUFIST, RUECKLAUFISTTEMP,
+ *    VERDICHTER and the energy counters are all readable.
+ *  - RAUMSOLLTEMP_II / _III return -255: this unit has only 1 heating circuit.
+ *  - Cooling registers (KUEHLMODE, KUEHL_RAUMSOLL_*) return -255 until the cooling
+ *    function is enabled on the display (menu > code 1000) AND the WPM is in
+ *    Sommerbetrieb. They are built-in but disabled by default.
  */
 
 #ifndef SIGNAL_REQUESTS_WPL17_H
@@ -36,111 +38,48 @@ extern const SignalRequest signalRequests[] = {
     SIGNAL_REQUESTS_BASE   // date/time, EVU lock, operating mode, energy counters
 
     // ========================================================================
-    // WPL17: signals queried from KESSEL (0x180)
+    // WPL17 (CAN-B): KESSEL_CANB (0x201) — Speicher/Raum/Heizkurve/Aussentemp
     // ========================================================================
-    {"AUSSENTEMP",                 FREQ_30S,   cm_kessel},
-    {"MAX_HEIZUNG_TEMP",           FREQ_10MIN, cm_kessel},  // WPL: MAXVORLAUFTEMP
-    {"MAX_TEMP_KESSEL",            FREQ_10MIN, cm_kessel},  // WPL: MAXRUECKLAUFTEMP
-    {"PUFFERTEMP_UNTEN1",          FREQ_1MIN,  cm_kessel},  // WPL: PUFFERISTTEMPERATUR
-    {"PUFFERSOLL",                 FREQ_1MIN,  cm_kessel},  // WPL: PUFFERSOLLTEMPERATUR
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_kessel},  // WPL: BIVALENZTEMPERATUR_HZG
-    {"BIVALENTPARALLELTEMPERATUR_WW",  FREQ_10MIN, cm_kessel},  // WPL: BIVALENZTEMPERATUR_WW
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_kessel},  // WPL: EINSATZGRENZE_HZG — low confidence
-    {"BIVALENZALTERNATIVTEMPERATUR_WW",  FREQ_10MIN, cm_kessel},  // WPL: EINSATZGRENZE_WW — low confidence
-    {"MAX_WW_TEMP",                FREQ_10MIN, cm_kessel},  // WPL: MAXIMALE_VORLAUFTEMP_WW
-    {"WPVORLAUFIST",               FREQ_30S,   cm_kessel},  // WPL: VORLAUFTEMP (already used by WPF10 too)
-    {"VORLAUFISTTEMP_WP",          FREQ_30S,   cm_kessel},
-    {"RUECKLAUFISTTEMP_WP",        FREQ_30S,   cm_kessel},
-    {"KUEHLEN_SOLLTEMP",           FREQ_1MIN,  cm_kessel},
-    {"KUEHLEN_ISTTEMP",            FREQ_1MIN,  cm_kessel},
-    {"AUSSEN_FROSTTEMP",           FREQ_10MIN, cm_kessel},  // WPL: ANLAGEFROST
-    {"FROSTSCHUTZTEMPERATUR",      FREQ_10MIN, cm_kessel},
-    {"VORLAUFISTTEMP_NHZ",         FREQ_30S,   cm_kessel},
-    {"AUSLEGUNGSTEMPERATUR",       FREQ_10MIN, cm_kessel},
-    {"WARMWASSERHYSTERESE",        FREQ_10MIN, cm_kessel},
-    {"WW_SOLLTEMPERATUR",          FREQ_1MIN,  cm_kessel},
-    {"HEIZUNGSDRUCK",              FREQ_30S,   cm_kessel},
-    {"VOLUMENSTROM_WPL",           FREQ_30S,   cm_kessel},
-    {"EINGESCHALTETE_STUFEN",      FREQ_10MIN, cm_kessel},  // source targets Manager — see Manager section below
-    {"SILENT_LEISTUNG",            FREQ_10MIN, cm_kessel},
-    {"SILENT_LUEFTER",             FREQ_10MIN, cm_kessel},
-    {"WAERMEPUMPE_AUS",            FREQ_10MIN, cm_kessel},
-    {"SOMMERBETRIEB_WPL17",        FREQ_1MIN,  cm_kessel},
-    {"WARMWASSERBETRIEB",          FREQ_10MIN, cm_kessel},
-    {"ANTILEGIONELLENBEHANDLUNG",  FREQ_10MIN, cm_kessel},
-    {"WW_ANFORDERUNG",             FREQ_1MIN,  cm_kessel},
-    {"LAUFZEIT_VD_HEIZEN_WPL17",   FREQ_10MIN, cm_kessel},
-    {"LAUFZEIT_VD_WW_WPL17",       FREQ_10MIN, cm_kessel},
-    {"LAUFZEIT_VD_KUEHLEN",        FREQ_10MIN, cm_kessel},
-    {"LAUFZEIT_VD_ABTAUEN_WPL17",  FREQ_10MIN, cm_kessel},
+    {"AUSSENTEMP",                 FREQ_30S,   cm_kessel_canb},
+    {"SPEICHERISTTEMP",            FREQ_30S,   cm_kessel_canb},
+    {"RAUMSOLLTEMP_I",             FREQ_1MIN,  cm_kessel_canb},   // Komforttemperatur
+    {"RAUMSOLLTEMP_NACHT",         FREQ_1MIN,  cm_kessel_canb},   // Eco-Temperatur
+    {"HEIZKURVE",                  FREQ_10MIN, cm_kessel_canb},   // Steigung (et_cent_val, 0.40)
 
     // ========================================================================
-    // WPL17: signals queried from MANAGER (0x480)
+    // WPL17 (CAN-B): MANAGER_CANB (0x480) — Betriebsmodus + Raum/Heizkurve
     // ========================================================================
-    {"HEIZEN_EFFIZIENZ_TAG",       FREQ_10MIN, cm_manager},
-    {"HEIZEN_EFFIZIENZ_JAHR",      FREQ_10MIN, cm_manager},
-    {"EINGESCHALTETE_STUFEN",      FREQ_10MIN, cm_manager},
+    {"PROGRAMMSCHALTER",           FREQ_1MIN,  cm_manager_canb},  // Automatik/Tagbetrieb/etc.
+    {"SOMMERBETRIEB",              FREQ_1MIN,  cm_manager_canb},  // Heizung aus, nur WW (on/off)
+    {"RAUMSOLLTEMP_I",             FREQ_1MIN,  cm_manager_canb},
+    {"HEIZKURVE",                  FREQ_10MIN, cm_manager_canb},
 
     // ========================================================================
-    // WPL17: signals queried from HEIZMODUL_WPL (0x514)
+    // WPL17 (CAN-B): HEIZMODUL_CANB (0x500) — Energien + Vorlauf/Ruecklauf/Verdichter
     // ========================================================================
-    {"VERDAMPFERISTTEMP_KOMPENSIERT", FREQ_1MIN,  cm_heizmodul_wpl},  // WPL: VERDAMPFERTEMP — low confidence
-    {"WE_KONFIGURATION",           FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: WP_WASSERVOLUMENSTROM — low confidence
-    {"LUEFTERDREHZAHL",            FREQ_1MIN,  cm_heizmodul_wpl},  // WPL17: LUEFTERLEISTUNG_REL — low confidence
-    {"SOLLDREHZAHL_LUEFTER",       FREQ_1MIN,  cm_heizmodul_wpl},
-    {"ISTDREHZAHL_LUEFTER",        FREQ_1MIN,  cm_heizmodul_wpl},
-    {"LAUFZEIT_DHC1",              FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: LAUFZEIT_NHZ1 — likely match
-    {"LAUFZEIT_DHC2",              FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: LAUFZEIT_NHZ2 — likely match
-    {"LZ_DHC12",                   FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: LAUFZEIT_NHZ1_2 — likely match
-    {"ZEITDAUER_LETZTE_ABTAUUNG",  FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: ZEIT_ABTAUEN — likely match
-    {"STARTS_ABTAUUNG",            FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: STARTS_ABTAUEN — likely match
-    {"P_ANTEIL_EXV",                FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: P_FAKTOR
-    {"I_ANTEIL_EXV",                FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: I_FAKTOR
-    {"D_ANTEIL_EXV",                FREQ_10MIN, cm_heizmodul_wpl},  // WPL17: D_FAKTOR
-    {"VORSTEUER_OEFFNUNGSGRAD",     FREQ_1MIN,  cm_heizmodul_wpl},  // WPL17: VORSTEUER_OEFFNUNGSGRAD_EXV
-    {"EXV_OEFFNUNGSGRAD",           FREQ_1MIN,  cm_heizmodul_wpl},  // WPL17: OEFFNUNGSGRAD_EXV
-    {"OEFFNUNGSGRAD_BYPASSVENT",    FREQ_1MIN,  cm_heizmodul_wpl},
-    {"MAXIMALE_PUMPENLEISTUNG",     FREQ_10MIN, cm_heizmodul_wpl},
-    {"STANDBY_PUMPENLEISTUNG",      FREQ_10MIN, cm_heizmodul_wpl},
-    {"LEISTUNG_WARMWASSERPUMPE_WPL", FREQ_1MIN, cm_heizmodul_wpl},
-    {"SOLLWERT_UEBERHITZUNG",       FREQ_1MIN,  cm_heizmodul_wpl},  // WPL17: SOLL_UEBERHITZUNG
-    {"ISTWERT_UEBERHITZUNG_VERDAMPFER", FREQ_1MIN, cm_heizmodul_wpl},  // WPL17: IST_UEBERHITZUNG_V
-    {"INTEGRAL_REGELABWEICHUNG",    FREQ_1MIN,  cm_heizmodul_wpl},  // WPL17: REGELABWEICHUNG — low confidence
-    {"SPANNUNG_INVERTER",           FREQ_1MIN,  cm_heizmodul_wpl},
-    {"STROM_INVERTER",              FREQ_1MIN,  cm_heizmodul_wpl},
-    {"STROM_MOTOR",                 FREQ_1MIN,  cm_heizmodul_wpl},
-    {"VERDICHTER_EINTRITTSTEMP",    FREQ_1MIN,  cm_heizmodul_wpl},
-    {"ISTDREHZAHL_VERDICHTER",      FREQ_30S,   cm_heizmodul_wpl},
-    {"SOLLDREHZAHL_VERDICHTER",     FREQ_30S,   cm_heizmodul_wpl},
-    {"ANZEIGE_HOCHDRUCK",           FREQ_30S,   cm_heizmodul_wpl},  // WPL: DRUCK_HOCHDRUCK
-    {"ANZEIGE_NIEDERDRUCK",         FREQ_30S,   cm_heizmodul_wpl},  // WPL: DRUCK_NIEDERDRUCK
-    {"RUECKLAUFTEMP_QUELLE",        FREQ_1MIN,  cm_heizmodul_wpl},
-    {"VORLAUFTEMP_QUELLE",          FREQ_1MIN,  cm_heizmodul_wpl},
-    {"QUELLENDRUCK_WPL",            FREQ_1MIN,  cm_heizmodul_wpl},
-    {"LEISTUNG_QUELLENPUMPE",       FREQ_1MIN,  cm_heizmodul_wpl},
-    {"VERDICHTER_STARTS_WPL17",     FREQ_10MIN, cm_heizmodul_wpl},
-    {"VERDICHTER_STARTS_K_WPL17",   FREQ_10MIN, cm_heizmodul_wpl},
-    {"LAUFZEIT_NHZ1",               FREQ_10MIN, cm_heizmodul_wpl},  // bare property also exists; see LAUFZEIT_DHC1 above
-    {"LAUFZEIT_NHZ2",               FREQ_10MIN, cm_heizmodul_wpl},
-    {"LAUFZEIT_NHZ1_2",             FREQ_10MIN, cm_heizmodul_wpl},
-    {"ZEIT_ABTAUEN",                FREQ_10MIN, cm_heizmodul_wpl},
-    {"STARTS_ABTAUEN",              FREQ_10MIN, cm_heizmodul_wpl},
+    {"WPVORLAUFIST",               FREQ_30S,   cm_heizmodul_canb},
+    {"RUECKLAUFISTTEMP",           FREQ_30S,   cm_heizmodul_canb},
+    {"VERDICHTER",                 FREQ_30S,   cm_heizmodul_canb},
+
+    // Energie-Register (MWh = et_double_val, kWh = separate Register).
+    // Die kombinierten "Gesamt kWh" berechneten Sensoren (MWh*1000+kWh) werden
+    // in ha-stiebel-control.h aus diesen Werten abgeleitet.
+    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul_canb},
+    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_KWH", FREQ_10MIN, cm_heizmodul_canb},
+    {"EL_AUFNAHMELEISTUNG_WW_SUM_MWH",   FREQ_10MIN, cm_heizmodul_canb},
+    {"EL_AUFNAHMELEISTUNG_WW_SUM_KWH",   FREQ_10MIN, cm_heizmodul_canb},
+    {"WAERMEERTRAG_HEIZ_SUM_MWH",        FREQ_10MIN, cm_heizmodul_canb},
+    {"WAERMEERTRAG_HEIZ_SUM_KWH",        FREQ_10MIN, cm_heizmodul_canb},
+    {"WAERMEERTRAG_WW_SUM_MWH",          FREQ_10MIN, cm_heizmodul_canb},
+    {"WAERMEERTRAG_WW_SUM_KWH",          FREQ_10MIN, cm_heizmodul_canb},
 
     // ========================================================================
-    // WPL17: signals queried from FET (0x402, room control unit)
+    // WPL17 (CAN-B): Kuehl-Register — vorhanden, aber default deaktiviert.
+    // Liefern -255 bis die Kuehlfunktion am Display (Code 1000) freigeschaltet ist.
     // ========================================================================
-    {"RAUMISTTEMP_WPL",            FREQ_1MIN,  cm_fet},
-    {"RAUMFEUCHTE_WPL",            FREQ_10MIN, cm_fet},
-    {"RAUMSOLLTEMP",               FREQ_1MIN,  cm_fet},
-
-    // ========================================================================
-    // WPL17: signals queried from HK1 (0x601 — reuses MISCHERMODUL_2)
-    // ========================================================================
-    {"ISTTEMPERATUR",              FREQ_1MIN,  cm_mischermodul_2},
-    {"SOLLTEMPERATUR",             FREQ_1MIN,  cm_mischermodul_2},
-    {"KOMFORTTEMPERATUR",          FREQ_10MIN, cm_mischermodul_2},
-    {"ECOTEMPERATUR",              FREQ_10MIN, cm_mischermodul_2},
-    {"STEIGUNG_HEIZKURVE",         FREQ_10MIN, cm_mischermodul_2},
+    {"KUEHLMODE",                 FREQ_10MIN, cm_kessel_canb},
+    {"KUEHL_RAUMSOLL_TAG",        FREQ_10MIN, cm_kessel_canb},
+    {"KUEHL_RAUMSOLL_NACHT",      FREQ_10MIN, cm_kessel_canb},
 };
 
 extern const size_t SIGNAL_REQUEST_COUNT_VALUE = sizeof(signalRequests) / sizeof(SignalRequest);

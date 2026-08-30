@@ -1,6 +1,21 @@
 {
-  "description": "Required topics for WPL17. UNVERIFIED — ported from community project kr0ner/OneESP32ToRuleThemAll desk research, no physical hardware tested, and the model needs can_bit_rate: 50kbps to communicate at all. Stub — populate/correct after verifying on real hardware. See tests/models/wpl13e_smoke.json for the expected format.",
+  "description": "Required topics for WPL17 (CAN-B, X1.2, 50 kbps). VERIFIED on real hardware 2026-08-30 (ICS classic): Speicheristtemp, Komforttemp (RAUMSOLLTEMP_I), Eco temp (RAUMSOLLTEMP_NACHT), Heizkurve, Aussentemp, Programm-Schalter, Sommerbetrieb, Energien. RAUMSOLLTEMP_II/III not present (1 heating circuit only).",
   "required_topics": [
-    "heatingpump/KESSEL/AUSSENTEMP/state"
+    "heatingpump/KESSEL_CANB/AUSSENTEMP/state",
+    "heatingpump/KESSEL_CANB/SPEICHERISTTEMP/state",
+    "heatingpump/KESSEL_CANB/RAUMSOLLTEMP_I/state",
+    "heatingpump/KESSEL_CANB/RAUMSOLLTEMP_NACHT/state",
+    "heatingpump/KESSEL_CANB/HEIZKURVE/state",
+    "heatingpump/MANAGER_CANB/PROGRAMMSCHALTER/state",
+    "heatingpump/MANAGER_CANB/SOMMERBETRIEB/state",
+    "heatingpump/MANAGER_CANB/RAUMSOLLTEMP_I/state",
+    "heatingpump/HEIZMODUL_CANB/WPVORLAUFIST/state",
+    "heatingpump/HEIZMODUL_CANB/RUECKLAUFISTTEMP/state",
+    "heatingpump/HEIZMODUL_CANB/EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH/state",
+    "heatingpump/HEIZMODUL_CANB/EL_AUFNAHMELEISTUNG_WW_SUM_MWH/state",
+    "heatingpump/HEIZMODUL_CANB/WAERMEERTRAG_HEIZ_SUM_MWH/state",
+    "heatingpump/HEIZMODUL_CANB/WAERMEERTRAG_WW_SUM_MWH/state",
+    "heatingpump/calculated/energie_heiz_total_kwh/state",
+    "heatingpump/calculated/waerme_heiz_total_kwh/state"
   ]
 }

@@ -20,1485 +20,1133 @@
 #include "signal_requests_base.h"
 
 extern const SignalRequest signalRequests[] = {
-    // === ENERGIEDATEN: MWh + kWh (fuer kombinierte Gesamtwerte) ===
-    {"WAERMEERTRAG_HEIZ_SUM_MWH",  FREQ_10S, cm_heizmodul_canb},
-    {"WAERMEERTRAG_HEIZ_SUM_KWH",  FREQ_10S, cm_heizmodul_canb},
-    {"WAERMEERTRAG_WW_SUM_MWH",    FREQ_10S, cm_heizmodul_canb},
-    {"WAERMEERTRAG_WW_SUM_KWH",    FREQ_10S, cm_heizmodul_canb},
-    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH", FREQ_10S, cm_heizmodul_canb},
-    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_KWH", FREQ_10S, cm_heizmodul_canb},
-    {"EL_AUFNAHMELEISTUNG_WW_SUM_MWH",   FREQ_10S, cm_heizmodul_canb},
-    {"EL_AUFNAHMELEISTUNG_WW_SUM_KWH",   FREQ_10S, cm_heizmodul_canb},
-
-    // === Referenzwerte (funktionieren sicher) ===
-    {"SPEICHERISTTEMP",          FREQ_10S, cm_kessel_canb},
-    {"RAUMSOLLTEMP_I",           FREQ_10S, cm_kessel_canb},
-    {"AUSSENTEMP",               FREQ_10S, cm_kessel_canb},
-
-    // === KUEHLFUNKTION (nur aktiv, wenn am Display freigeschaltet) ===
-    // KUEHLMODE, KUEHL_RAUMSOLL_TAG, KUEHL_RAUMSOLL_NACHT, KUEHL_VORLAUFSOLLTEMP
-    // liefern -255, bis die Kuehlfunktion aktiviert ist (Menue > Code 1000).
-    // Hier auskommentiert, da nicht freigeschaltet. Fuer spaetere Tests eintragen:
-    // {"KUEHLMODE",             FREQ_10S, cm_kessel_canb},
-    // {"KUEHL_RAUMSOLL_TAG",    FREQ_10S, cm_kessel_canb},
-    // {"KUEHL_RAUMSOLL_NACHT",  FREQ_10S, cm_kessel_canb},
+    SIGNAL_REQUESTS_BASE
 
     // =====================================================================
-    // AUTO-GENERIERT aus ElsterTable.h (alle 245 typisierten Signale ohne
-    // Zeitprogramme). Diagnose: prueft jedes Signal gegen die fuer seinen
-    // Index-Block plausiblen Member. Antworten (nicht -255/0) wandern spaeter
-    // in signal_requests_wpl17.h. FREQ_10MIN = schonend fuer den Bus.
+    // AUTO-GENERIERT: WPL-Block (0x4exx/0x4fxx/0x50xx) + alle Status-/Modus-
+    // Register, geprueft gegen ALLE 18 CAN-Member. Ziel: finden, welcher Member
+    // Betriebsmodus und die fehlenden WPL-Werte liefert. FREQ_10MIN.
     // =====================================================================
 
     // ---- Block 0x000xx ----
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0002 et_dec_val
-    {"KESSELSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0002 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0003 et_dec_val
-    {"SPEICHERSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0003 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0004 et_dec_val
-    {"VORLAUFSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0004 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_kessel_canb},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_kessel},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_manager},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_heizmodul},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_mischermodul_2},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_I", FREQ_10MIN, cm_fremdgeraet},  // 0x0005 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_kessel_canb},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_kessel},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_manager},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_heizmodul},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_mischermodul_2},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_II", FREQ_10MIN, cm_fremdgeraet},  // 0x0006 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_kessel_canb},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_kessel},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_manager},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_heizmodul},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_mischermodul_2},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_III", FREQ_10MIN, cm_fremdgeraet},  // 0x0007 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_kessel_canb},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_kessel},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_manager},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_heizmodul},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_mischermodul_2},  // 0x0008 et_dec_val
-    {"RAUMSOLLTEMP_NACHT", FREQ_10MIN, cm_fremdgeraet},  // 0x0008 et_dec_val
-    {"UHRZEIT", FREQ_10MIN, cm_kessel_canb},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_kessel},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_manager},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_heizmodul},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_mischermodul_2},  // 0x0009 et_zeit
-    {"UHRZEIT", FREQ_10MIN, cm_fremdgeraet},  // 0x0009 et_zeit
-    {"DATUM", FREQ_10MIN, cm_kessel_canb},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_heizmodul_wpl},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_kessel},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_manager},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_heizmodul},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_mischermodul_2},  // 0x000a et_datum
-    {"DATUM", FREQ_10MIN, cm_fremdgeraet},  // 0x000a et_datum
-    {"AUSSENTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_kessel},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_manager},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_heizmodul},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x000c et_dec_val
-    {"AUSSENTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x000c et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_kessel},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_manager},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x000d et_dec_val
-    {"SAMMLERISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x000d et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_kessel},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_manager},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x000e et_dec_val
-    {"SPEICHERISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x000e et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_kessel},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_manager},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x000f et_dec_val
-    {"VORLAUFISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x000f et_dec_val
-    {"RAUMISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0011 et_dec_val
-    {"RAUMISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0011 et_dec_val
     {"RAUMISTTEMP", FREQ_10MIN, cm_kessel},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_atez},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x0011 et_dec_val
     {"RAUMISTTEMP", FREQ_10MIN, cm_manager},  // 0x0011 et_dec_val
     {"RAUMISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_buskoppler},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x0011 et_dec_val
     {"RAUMISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x0011 et_dec_val
     {"RAUMISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0011 et_dec_val
-    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0012 et_dec_val
-    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0012 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0011 et_dec_val
+    {"RAUMISTTEMP", FREQ_10MIN, cm_fet},  // 0x0011 et_dec_val
     {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_atez},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x0012 et_dec_val
     {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0012 et_dec_val
     {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_buskoppler},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x0012 et_dec_val
     {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x0012 et_dec_val
     {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0012 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0013 et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0013 et_dec_val
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_kessel},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_manager},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0014 et_byte
-    {"VERDAMPFERTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0014 et_byte
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0015 et_dec_val
-    {"SAMMLERSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0015 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_kessel},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_manager},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0016 et_dec_val
-    {"RUECKLAUFISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0016 et_dec_val
-    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0017 et_dec_val
-    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0017 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0012 et_dec_val
+    {"VERSTELLTE_RAUMSOLLTEMP", FREQ_10MIN, cm_fet},  // 0x0012 et_dec_val
     {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_kessel},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_atez},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x0017 et_dec_val
     {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_manager},  // 0x0017 et_dec_val
     {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_buskoppler},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x0017 et_dec_val
     {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x0017 et_dec_val
     {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0017 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_kessel},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_manager},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0018 et_dec_val
-    {"SOLARZONENTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0018 et_dec_val
-    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0019 et_dec_val
-    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0019 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0017 et_dec_val
+    {"SPEICHER_UNTEN_TEMP", FREQ_10MIN, cm_fet},  // 0x0017 et_dec_val
     {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_kessel},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_atez},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x0019 et_dec_val
     {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_manager},  // 0x0019 et_dec_val
     {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_buskoppler},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x0019 et_dec_val
     {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x0019 et_dec_val
     {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0019 et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_kessel},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_manager},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_heizmodul},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x001b et_dec_val
-    {"KOLLEKTORTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x001b et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_kessel},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_manager},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_heizmodul},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x001c et_dec_val
-    {"FESTSTOFFKESSELTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x001c et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_kessel_canb},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_kessel},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_manager},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_heizmodul},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_mischermodul_2},  // 0x0020 et_dec_val
-    {"MIN_TEMP_KESSEL", FREQ_10MIN, cm_fremdgeraet},  // 0x0020 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_kessel},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_manager},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0021 et_dec_val
-    {"ANFAHRTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0021 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_kessel_canb},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_kessel},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_manager},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_heizmodul},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_mischermodul_2},  // 0x0022 et_dec_val
-    {"HYSTERESEZEIT", FREQ_10MIN, cm_fremdgeraet},  // 0x0022 et_dec_val
-    {"MAX_HYSTERESE", FREQ_10MIN, cm_kessel_canb},  // 0x0023 et_little_endian
-    {"MAX_HYSTERESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0023 et_little_endian
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0019 et_dec_val
+    {"SPEICHER_OBEN_TEMP", FREQ_10MIN, cm_fet},  // 0x0019 et_dec_val
     {"MAX_HYSTERESE", FREQ_10MIN, cm_kessel},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_atez},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_bedienmodul_1},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_bedienmodul_2},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_bedienmodul_3},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_bedienmodul_4},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_raumfernfuehler},  // 0x0023 et_little_endian
     {"MAX_HYSTERESE", FREQ_10MIN, cm_manager},  // 0x0023 et_little_endian
     {"MAX_HYSTERESE", FREQ_10MIN, cm_heizmodul},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_buskoppler},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_mischermodul_1},  // 0x0023 et_little_endian
     {"MAX_HYSTERESE", FREQ_10MIN, cm_mischermodul_2},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_mischermodul_3},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_mischermodul_4},  // 0x0023 et_little_endian
     {"MAX_HYSTERESE", FREQ_10MIN, cm_fremdgeraet},  // 0x0023 et_little_endian
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_kessel_canb},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_kessel},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_manager},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_heizmodul},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_mischermodul_2},  // 0x0028 et_dec_val
-    {"MAX_TEMP_KESSEL", FREQ_10MIN, cm_fremdgeraet},  // 0x0028 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_kessel_canb},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_kessel},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_manager},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_heizmodul},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_mischermodul_2},  // 0x0029 et_dec_val
-    {"MAX_TEMP_HZK", FREQ_10MIN, cm_fremdgeraet},  // 0x0029 et_dec_val
-    {"TN", FREQ_10MIN, cm_kessel_canb},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_heizmodul_wpl},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_kessel},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_manager},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_heizmodul},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_mischermodul_2},  // 0x002b et_little_endian
-    {"TN", FREQ_10MIN, cm_fremdgeraet},  // 0x002b et_little_endian
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_kessel_canb},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_kessel},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_manager},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_heizmodul},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_mischermodul_2},  // 0x0036 et_dec_val
-    {"KOLLEKTORTEMP_2", FREQ_10MIN, cm_fremdgeraet},  // 0x0036 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_kessel},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_manager},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0051 et_dec_val
-    {"MULTIFUNKTION_ISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0051 et_dec_val
-    {"BRENNER", FREQ_10MIN, cm_kessel_canb},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_kessel},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_manager},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_heizmodul},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_mischermodul_2},  // 0x0052 et_little_endian
-    {"BRENNER", FREQ_10MIN, cm_fremdgeraet},  // 0x0052 et_little_endian
-    {"DCF", FREQ_10MIN, cm_kessel_canb},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_kessel},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_manager},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_heizmodul},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_mischermodul_2},  // 0x0056 et_little_endian
-    {"DCF", FREQ_10MIN, cm_fremdgeraet},  // 0x0056 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_kessel_canb},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_kessel},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_manager},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_heizmodul},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_mischermodul_2},  // 0x0057 et_little_endian
-    {"MISCHER_AUF", FREQ_10MIN, cm_fremdgeraet},  // 0x0057 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_kessel_canb},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_kessel},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_manager},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_heizmodul},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_mischermodul_2},  // 0x0058 et_little_endian
-    {"MISCHER_ZU", FREQ_10MIN, cm_fremdgeraet},  // 0x0058 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_kessel},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_manager},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_heizmodul},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x0059 et_little_endian
-    {"HEIZKREIS_STATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x0059 et_little_endian
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_kessel},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_manager},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_heizmodul},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x0061 et_bool
-    {"ABTAUUNGAKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x0061 et_bool
-    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0062 et_little_endian
-    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0062 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_kessel_canb},  // 0x0023 et_little_endian
+    {"MAX_HYSTERESE", FREQ_10MIN, cm_fet},  // 0x0023 et_little_endian
     {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_kessel},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_atez},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0x0062 et_little_endian
     {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_manager},  // 0x0062 et_little_endian
     {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_heizmodul},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_buskoppler},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_mischermodul_1},  // 0x0062 et_little_endian
     {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_mischermodul_3},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_mischermodul_4},  // 0x0062 et_little_endian
     {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x0062 et_little_endian
-    {"KESSELSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0063 et_little_endian
-    {"KESSELSTATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0063 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0062 et_little_endian
+    {"WAERMEPUMPEN_STATUS", FREQ_10MIN, cm_fet},  // 0x0062 et_little_endian
     {"KESSELSTATUS", FREQ_10MIN, cm_kessel},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_atez},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0x0063 et_little_endian
     {"KESSELSTATUS", FREQ_10MIN, cm_manager},  // 0x0063 et_little_endian
     {"KESSELSTATUS", FREQ_10MIN, cm_heizmodul},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_buskoppler},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_mischermodul_1},  // 0x0063 et_little_endian
     {"KESSELSTATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_mischermodul_3},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_mischermodul_4},  // 0x0063 et_little_endian
     {"KESSELSTATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x0063 et_little_endian
-    {"MISCHERSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0066 et_little_endian
-    {"MISCHERSTATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0066 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0063 et_little_endian
+    {"KESSELSTATUS", FREQ_10MIN, cm_fet},  // 0x0063 et_little_endian
     {"MISCHERSTATUS", FREQ_10MIN, cm_kessel},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_atez},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0x0066 et_little_endian
     {"MISCHERSTATUS", FREQ_10MIN, cm_manager},  // 0x0066 et_little_endian
     {"MISCHERSTATUS", FREQ_10MIN, cm_heizmodul},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_buskoppler},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_mischermodul_1},  // 0x0066 et_little_endian
     {"MISCHERSTATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_mischermodul_3},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_mischermodul_4},  // 0x0066 et_little_endian
     {"MISCHERSTATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x0066 et_little_endian
-    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0067 et_little_endian
-    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0067 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0066 et_little_endian
+    {"MISCHERSTATUS", FREQ_10MIN, cm_fet},  // 0x0066 et_little_endian
     {"SONDERKREIS_STATUS", FREQ_10MIN, cm_kessel},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_atez},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0x0067 et_little_endian
     {"SONDERKREIS_STATUS", FREQ_10MIN, cm_manager},  // 0x0067 et_little_endian
     {"SONDERKREIS_STATUS", FREQ_10MIN, cm_heizmodul},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_buskoppler},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_mischermodul_1},  // 0x0067 et_little_endian
     {"SONDERKREIS_STATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_mischermodul_3},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_mischermodul_4},  // 0x0067 et_little_endian
     {"SONDERKREIS_STATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x0067 et_little_endian
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_kessel},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_manager},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_heizmodul},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x0072 et_bool
-    {"ANTILEG_AKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x0072 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_kessel},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_manager},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_heizmodul},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x0074 et_bool
-    {"EVU_SPERRE_AKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x0074 et_bool
-    {"FEUCHTE", FREQ_10MIN, cm_kessel_canb},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_kessel},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_manager},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_heizmodul},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_mischermodul_2},  // 0x0075 et_dec_val
-    {"FEUCHTE", FREQ_10MIN, cm_fremdgeraet},  // 0x0075 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_kessel_canb},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_kessel},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_manager},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_heizmodul},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_mischermodul_2},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_OBEN1", FREQ_10MIN, cm_fremdgeraet},  // 0x0076 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_kessel_canb},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_kessel},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_manager},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_heizmodul},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_mischermodul_2},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_MITTE1", FREQ_10MIN, cm_fremdgeraet},  // 0x0077 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_kessel_canb},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_kessel},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_manager},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_heizmodul},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_mischermodul_2},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_UNTEN1", FREQ_10MIN, cm_fremdgeraet},  // 0x0078 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_kessel_canb},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_kessel},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_manager},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_heizmodul},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_mischermodul_2},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_OBEN2", FREQ_10MIN, cm_fremdgeraet},  // 0x0079 et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_kessel_canb},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_kessel},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_manager},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_heizmodul},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_mischermodul_2},  // 0x007a et_dec_val
-    {"PUFFERTEMP_MITTE2", FREQ_10MIN, cm_fremdgeraet},  // 0x007a et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_kessel_canb},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_kessel},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_manager},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_heizmodul},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_mischermodul_2},  // 0x007b et_dec_val
-    {"PUFFERTEMP_UNTEN2", FREQ_10MIN, cm_fremdgeraet},  // 0x007b et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_kessel_canb},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_heizmodul_wpl},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_kessel},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_manager},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_heizmodul},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_mischermodul_2},  // 0x007c et_dec_val
-    {"PUFFERTEMP_OBEN3", FREQ_10MIN, cm_fremdgeraet},  // 0x007c et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_kessel_canb},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_heizmodul_wpl},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_kessel},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_manager},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_heizmodul},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_mischermodul_2},  // 0x007d et_dec_val
-    {"PUFFERTEMP_MITTE3", FREQ_10MIN, cm_fremdgeraet},  // 0x007d et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_kessel_canb},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_heizmodul_wpl},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_kessel},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_manager},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_heizmodul},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_mischermodul_2},  // 0x007e et_dec_val
-    {"PUFFERTEMP_UNTEN3", FREQ_10MIN, cm_fremdgeraet},  // 0x007e et_dec_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_kessel},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_manager},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_mischermodul_2},  // 0x0086 et_double_val
-    {"SOLAR_TAGESERTRAG_KWH", FREQ_10MIN, cm_fremdgeraet},  // 0x0086 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_kessel},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_manager},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_mischermodul_2},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_KWH", FREQ_10MIN, cm_fremdgeraet},  // 0x0088 et_double_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_kessel},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_manager},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_heizmodul},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_mischermodul_2},  // 0x0089 et_triple_val
-    {"SOLAR_GESAMTERTRAG_MWH", FREQ_10MIN, cm_fremdgeraet},  // 0x0089 et_triple_val
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0x0067 et_little_endian
+    {"SONDERKREIS_STATUS", FREQ_10MIN, cm_fet},  // 0x0067 et_little_endian
 
     // ---- Block 0x001xx ----
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_kessel_canb},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_kessel},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_manager},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_heizmodul},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_mischermodul_2},  // 0x010c et_dec_val
-    {"AUSSENTEMPVERZOEGERUNG", FREQ_10MIN, cm_fremdgeraet},  // 0x010c et_dec_val
-    {"HEIZKURVE", FREQ_10MIN, cm_kessel_canb},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_kessel},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_manager},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_heizmodul},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_mischermodul_2},  // 0x010e et_cent_val
-    {"HEIZKURVE", FREQ_10MIN, cm_fremdgeraet},  // 0x010e et_cent_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_kessel_canb},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_kessel},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_manager},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_heizmodul},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_mischermodul_2},  // 0x0111 et_dec_val
-    {"HZK_KURVENABSTAND", FREQ_10MIN, cm_fremdgeraet},  // 0x0111 et_dec_val
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_kessel_canb},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_kessel},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_manager},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_heizmodul},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_mischermodul_2},  // 0x0112 et_betriebsart
-    {"PROGRAMMSCHALTER", FREQ_10MIN, cm_fremdgeraet},  // 0x0112 et_betriebsart
-    {"SPRACHE", FREQ_10MIN, cm_kessel_canb},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_kessel},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_manager},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_heizmodul},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_mischermodul_2},  // 0x0113 et_little_endian
-    {"SPRACHE", FREQ_10MIN, cm_fremdgeraet},  // 0x0113 et_little_endian
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_kessel},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_manager},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0119 et_dec_val
-    {"AUSWAHL_STANDARDTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0119 et_dec_val
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_kessel_canb},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_kessel},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_manager},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_heizmodul},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_mischermodul_2},  // 0x011a et_little_endian
-    {"ESTRICHFUNKTION", FREQ_10MIN, cm_fremdgeraet},  // 0x011a et_little_endian
-    {"FERIENANFANG_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x011b et_little_endian
-    {"FERIENANFANG_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011b et_little_endian
     {"FERIENANFANG_TAG", FREQ_10MIN, cm_kessel},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_atez},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_bedienmodul_1},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_bedienmodul_2},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_bedienmodul_3},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_bedienmodul_4},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_raumfernfuehler},  // 0x011b et_little_endian
     {"FERIENANFANG_TAG", FREQ_10MIN, cm_manager},  // 0x011b et_little_endian
     {"FERIENANFANG_TAG", FREQ_10MIN, cm_heizmodul},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_buskoppler},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_mischermodul_1},  // 0x011b et_little_endian
     {"FERIENANFANG_TAG", FREQ_10MIN, cm_mischermodul_2},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_mischermodul_3},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_mischermodul_4},  // 0x011b et_little_endian
     {"FERIENANFANG_TAG", FREQ_10MIN, cm_fremdgeraet},  // 0x011b et_little_endian
-    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_kessel_canb},  // 0x011c et_little_endian
-    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011c et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x011b et_little_endian
+    {"FERIENANFANG_TAG", FREQ_10MIN, cm_fet},  // 0x011b et_little_endian
     {"FERIENANFANG_MONAT", FREQ_10MIN, cm_kessel},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_atez},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_bedienmodul_1},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_bedienmodul_2},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_bedienmodul_3},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_bedienmodul_4},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_raumfernfuehler},  // 0x011c et_little_endian
     {"FERIENANFANG_MONAT", FREQ_10MIN, cm_manager},  // 0x011c et_little_endian
     {"FERIENANFANG_MONAT", FREQ_10MIN, cm_heizmodul},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_buskoppler},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_mischermodul_1},  // 0x011c et_little_endian
     {"FERIENANFANG_MONAT", FREQ_10MIN, cm_mischermodul_2},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_mischermodul_3},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_mischermodul_4},  // 0x011c et_little_endian
     {"FERIENANFANG_MONAT", FREQ_10MIN, cm_fremdgeraet},  // 0x011c et_little_endian
-    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x011d et_little_endian
-    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011d et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_kessel_canb},  // 0x011c et_little_endian
+    {"FERIENANFANG_MONAT", FREQ_10MIN, cm_fet},  // 0x011c et_little_endian
     {"FERIENANFANG_JAHR", FREQ_10MIN, cm_kessel},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_atez},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_bedienmodul_1},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_bedienmodul_2},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_bedienmodul_3},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_bedienmodul_4},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_raumfernfuehler},  // 0x011d et_little_endian
     {"FERIENANFANG_JAHR", FREQ_10MIN, cm_manager},  // 0x011d et_little_endian
     {"FERIENANFANG_JAHR", FREQ_10MIN, cm_heizmodul},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_buskoppler},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_mischermodul_1},  // 0x011d et_little_endian
     {"FERIENANFANG_JAHR", FREQ_10MIN, cm_mischermodul_2},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_mischermodul_3},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_mischermodul_4},  // 0x011d et_little_endian
     {"FERIENANFANG_JAHR", FREQ_10MIN, cm_fremdgeraet},  // 0x011d et_little_endian
-    {"FERIENENDE_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x011e et_little_endian
-    {"FERIENENDE_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011e et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x011d et_little_endian
+    {"FERIENANFANG_JAHR", FREQ_10MIN, cm_fet},  // 0x011d et_little_endian
     {"FERIENENDE_TAG", FREQ_10MIN, cm_kessel},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_atez},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_bedienmodul_1},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_bedienmodul_2},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_bedienmodul_3},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_bedienmodul_4},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_raumfernfuehler},  // 0x011e et_little_endian
     {"FERIENENDE_TAG", FREQ_10MIN, cm_manager},  // 0x011e et_little_endian
     {"FERIENENDE_TAG", FREQ_10MIN, cm_heizmodul},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_buskoppler},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_mischermodul_1},  // 0x011e et_little_endian
     {"FERIENENDE_TAG", FREQ_10MIN, cm_mischermodul_2},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_mischermodul_3},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_mischermodul_4},  // 0x011e et_little_endian
     {"FERIENENDE_TAG", FREQ_10MIN, cm_fremdgeraet},  // 0x011e et_little_endian
-    {"FERIENENDE_MONAT", FREQ_10MIN, cm_kessel_canb},  // 0x011f et_little_endian
-    {"FERIENENDE_MONAT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011f et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x011e et_little_endian
+    {"FERIENENDE_TAG", FREQ_10MIN, cm_fet},  // 0x011e et_little_endian
     {"FERIENENDE_MONAT", FREQ_10MIN, cm_kessel},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_atez},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_bedienmodul_1},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_bedienmodul_2},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_bedienmodul_3},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_bedienmodul_4},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_raumfernfuehler},  // 0x011f et_little_endian
     {"FERIENENDE_MONAT", FREQ_10MIN, cm_manager},  // 0x011f et_little_endian
     {"FERIENENDE_MONAT", FREQ_10MIN, cm_heizmodul},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_buskoppler},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_mischermodul_1},  // 0x011f et_little_endian
     {"FERIENENDE_MONAT", FREQ_10MIN, cm_mischermodul_2},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_mischermodul_3},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_mischermodul_4},  // 0x011f et_little_endian
     {"FERIENENDE_MONAT", FREQ_10MIN, cm_fremdgeraet},  // 0x011f et_little_endian
-    {"FERIENENDE_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x0120 et_little_endian
-    {"FERIENENDE_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0120 et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_kessel_canb},  // 0x011f et_little_endian
+    {"FERIENENDE_MONAT", FREQ_10MIN, cm_fet},  // 0x011f et_little_endian
     {"FERIENENDE_JAHR", FREQ_10MIN, cm_kessel},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_atez},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_bedienmodul_1},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_bedienmodul_2},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_bedienmodul_3},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_bedienmodul_4},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_raumfernfuehler},  // 0x0120 et_little_endian
     {"FERIENENDE_JAHR", FREQ_10MIN, cm_manager},  // 0x0120 et_little_endian
     {"FERIENENDE_JAHR", FREQ_10MIN, cm_heizmodul},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_buskoppler},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_mischermodul_1},  // 0x0120 et_little_endian
     {"FERIENENDE_JAHR", FREQ_10MIN, cm_mischermodul_2},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_mischermodul_3},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_mischermodul_4},  // 0x0120 et_little_endian
     {"FERIENENDE_JAHR", FREQ_10MIN, cm_fremdgeraet},  // 0x0120 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_kessel_canb},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_kessel},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_manager},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_heizmodul},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_mischermodul_2},  // 0x0121 et_little_endian
-    {"WOCHENTAG", FREQ_10MIN, cm_fremdgeraet},  // 0x0121 et_little_endian
-    {"TAG", FREQ_10MIN, cm_kessel_canb},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_kessel},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_manager},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_heizmodul},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_mischermodul_2},  // 0x0122 et_little_endian
-    {"TAG", FREQ_10MIN, cm_fremdgeraet},  // 0x0122 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_kessel_canb},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_kessel},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_manager},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_heizmodul},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_mischermodul_2},  // 0x0123 et_little_endian
-    {"MONAT", FREQ_10MIN, cm_fremdgeraet},  // 0x0123 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_kessel},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_manager},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_heizmodul},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_mischermodul_2},  // 0x0124 et_little_endian
-    {"JAHR", FREQ_10MIN, cm_fremdgeraet},  // 0x0124 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_kessel_canb},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_kessel},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_manager},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_heizmodul},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_mischermodul_2},  // 0x0125 et_little_endian
-    {"STUNDE", FREQ_10MIN, cm_fremdgeraet},  // 0x0125 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_kessel_canb},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_kessel},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_manager},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_heizmodul},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_mischermodul_2},  // 0x0126 et_little_endian
-    {"MINUTE", FREQ_10MIN, cm_fremdgeraet},  // 0x0126 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_kessel_canb},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_kessel},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_manager},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_heizmodul},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_mischermodul_2},  // 0x0127 et_little_endian
-    {"SEKUNDE", FREQ_10MIN, cm_fremdgeraet},  // 0x0127 et_little_endian
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_kessel_canb},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_kessel},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_manager},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_heizmodul},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_mischermodul_2},  // 0x012b et_dec_val
-    {"MIN_TEMP_HZK", FREQ_10MIN, cm_fremdgeraet},  // 0x012b et_dec_val
-    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x012d et_dec_val
-    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x012d et_dec_val
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x0120 et_little_endian
+    {"FERIENENDE_JAHR", FREQ_10MIN, cm_fet},  // 0x0120 et_little_endian
     {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_kessel},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_atez},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x012d et_dec_val
     {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_manager},  // 0x012d et_dec_val
     {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_heizmodul},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_buskoppler},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x012d et_dec_val
     {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x012d et_dec_val
     {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x012d et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_kessel},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_manager},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0134 et_dec_val
-    {"WW_MAXTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0134 et_dec_val
-    {"WARMWASSERMODE", FREQ_10MIN, cm_kessel_canb},  // 0x0135 et_little_endian
-    {"WARMWASSERMODE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0135 et_little_endian
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x012d et_dec_val
+    {"FERIEN_ABSENKTEMP", FREQ_10MIN, cm_fet},  // 0x012d et_dec_val
     {"WARMWASSERMODE", FREQ_10MIN, cm_kessel},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_atez},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_bedienmodul_1},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_bedienmodul_2},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_bedienmodul_3},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_bedienmodul_4},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_raumfernfuehler},  // 0x0135 et_little_endian
     {"WARMWASSERMODE", FREQ_10MIN, cm_manager},  // 0x0135 et_little_endian
     {"WARMWASSERMODE", FREQ_10MIN, cm_heizmodul},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_buskoppler},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_mischermodul_1},  // 0x0135 et_little_endian
     {"WARMWASSERMODE", FREQ_10MIN, cm_mischermodul_2},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_mischermodul_3},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_mischermodul_4},  // 0x0135 et_little_endian
     {"WARMWASSERMODE", FREQ_10MIN, cm_fremdgeraet},  // 0x0135 et_little_endian
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_kessel_canb},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_kessel},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_manager},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_heizmodul},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_mischermodul_2},  // 0x0137 et_dec_val
-    {"KESSELSOLLTEMP_2WE", FREQ_10MIN, cm_fremdgeraet},  // 0x0137 et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_kessel},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_manager},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_heizmodul},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x013d et_dec_val
-    {"ABWESENHEITSTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x013d et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_kessel_canb},  // 0x013e et_dec_val
-    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_heizmodul_wpl},  // 0x013e et_dec_val
+    {"WARMWASSERMODE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_kessel_canb},  // 0x0135 et_little_endian
+    {"WARMWASSERMODE", FREQ_10MIN, cm_fet},  // 0x0135 et_little_endian
     {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_kessel},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_atez},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_bedienmodul_1},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_bedienmodul_2},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_bedienmodul_3},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_bedienmodul_4},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_raumfernfuehler},  // 0x013e et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_manager},  // 0x013e et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_heizmodul},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_buskoppler},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_mischermodul_1},  // 0x013e et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_mischermodul_2},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_mischermodul_3},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_mischermodul_4},  // 0x013e et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_fremdgeraet},  // 0x013e et_dec_val
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_kessel},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_manager},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_heizmodul},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x0144 et_bool
-    {"EINMAL_WW_AKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x0144 et_bool
-    {"ABGASTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_kessel},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_manager},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0145 et_dec_val
-    {"ABGASTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0145 et_dec_val
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_kessel_canb},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_kessel},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_manager},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_heizmodul},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_mischermodul_2},  // 0x015b et_little_endian
-    {"GERAETEKONFIGURATION_2", FREQ_10MIN, cm_fremdgeraet},  // 0x015b et_little_endian
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_manager},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x016a et_dec_val
-    {"WW_SCHNELL_START_TEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x016a et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_kessel},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_manager},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0181 et_dec_val
-    {"MAX_WW_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0181 et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_kessel_canb},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_kessel},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_manager},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_heizmodul},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_mischermodul_2},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_HZG", FREQ_10MIN, cm_fremdgeraet},  // 0x01ac et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_kessel_canb},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_kessel},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_manager},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_heizmodul},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_mischermodul_2},  // 0x01ad et_dec_val
-    {"BIVALENTPARALLELTEMPERATUR_WW", FREQ_10MIN, cm_fremdgeraet},  // 0x01ad et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_kessel_canb},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_kessel},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_manager},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_heizmodul},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_mischermodul_2},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_HZG", FREQ_10MIN, cm_fremdgeraet},  // 0x01ae et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_kessel_canb},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_kessel},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_manager},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_heizmodul},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_mischermodul_2},  // 0x01af et_dec_val
-    {"BIVALENZALTERNATIVTEMPERATUR_WW", FREQ_10MIN, cm_fremdgeraet},  // 0x01af et_dec_val
-    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x01b0 et_dec_val
-    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b0 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_heizmodul_wpl},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_kessel_canb},  // 0x013e et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP3", FREQ_10MIN, cm_fet},  // 0x013e et_dec_val
     {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x01b0 et_dec_val
     {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x01b0 et_dec_val
     {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x01b0 et_dec_val
     {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x01b0 et_dec_val
     {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x01b0 et_dec_val
-    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_kessel_canb},  // 0x01b7 et_dec_val
-    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b7 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x01b0 et_dec_val
+    {"QUELLENSOLLTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x01b0 et_dec_val
     {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_kessel},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_atez},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_bedienmodul_1},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_bedienmodul_2},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_bedienmodul_3},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_bedienmodul_4},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_raumfernfuehler},  // 0x01b7 et_dec_val
     {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_manager},  // 0x01b7 et_dec_val
     {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_heizmodul},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_buskoppler},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_mischermodul_1},  // 0x01b7 et_dec_val
     {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_mischermodul_2},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_mischermodul_3},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_mischermodul_4},  // 0x01b7 et_dec_val
     {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_fremdgeraet},  // 0x01b7 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_kessel_canb},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_kessel},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_manager},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_heizmodul},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_mischermodul_2},  // 0x01b8 et_dec_val
-    {"SOLARDIFFERENZ", FREQ_10MIN, cm_fremdgeraet},  // 0x01b8 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_kessel_canb},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_kessel},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_manager},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_heizmodul},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_mischermodul_2},  // 0x01b9 et_dec_val
-    {"SOLARTEMP_MAX", FREQ_10MIN, cm_fremdgeraet},  // 0x01b9 et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x01bb et_dec_val
-    {"ESTRICH_SOCKELTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x01bb et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_manager},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x01bd et_dec_val
-    {"ESTRICH_MAX_TEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x01bd et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_kessel},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_manager},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_heizmodul},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x01bf et_dec_val
-    {"SW_AUSSENTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x01bf et_dec_val
-    {"FESTWERT", FREQ_10MIN, cm_kessel_canb},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_kessel},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_manager},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_heizmodul},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_mischermodul_2},  // 0x01c0 et_little_endian
-    {"FESTWERT", FREQ_10MIN, cm_fremdgeraet},  // 0x01c0 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_kessel},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_manager},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_heizmodul},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_mischermodul_2},  // 0x01d2 et_little_endian
-    {"PUMPENSTATUS", FREQ_10MIN, cm_fremdgeraet},  // 0x01d2 et_little_endian
-    {"QUELLE_IST", FREQ_10MIN, cm_kessel_canb},  // 0x01d4 et_dec_val
-    {"QUELLE_IST", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d4 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_kessel_canb},  // 0x01b7 et_dec_val
+    {"AUSSENTEMPERATUR_WARMWASSER", FREQ_10MIN, cm_fet},  // 0x01b7 et_dec_val
     {"QUELLE_IST", FREQ_10MIN, cm_kessel},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_atez},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_bedienmodul_1},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_bedienmodul_2},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_bedienmodul_3},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_bedienmodul_4},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_raumfernfuehler},  // 0x01d4 et_dec_val
     {"QUELLE_IST", FREQ_10MIN, cm_manager},  // 0x01d4 et_dec_val
     {"QUELLE_IST", FREQ_10MIN, cm_heizmodul},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_buskoppler},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_mischermodul_1},  // 0x01d4 et_dec_val
     {"QUELLE_IST", FREQ_10MIN, cm_mischermodul_2},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_mischermodul_3},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_mischermodul_4},  // 0x01d4 et_dec_val
     {"QUELLE_IST", FREQ_10MIN, cm_fremdgeraet},  // 0x01d4 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_kessel_canb},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_kessel},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_manager},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_heizmodul},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_mischermodul_2},  // 0x01d5 et_dec_val
-    {"PUFFERSOLL", FREQ_10MIN, cm_fremdgeraet},  // 0x01d5 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_kessel_canb},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_kessel},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_manager},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_heizmodul},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_mischermodul_2},  // 0x01d6 et_dec_val
-    {"WPVORLAUFIST", FREQ_10MIN, cm_fremdgeraet},  // 0x01d6 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_kessel_canb},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_kessel},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_manager},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_heizmodul},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_mischermodul_2},  // 0x01d7 et_dec_val
-    {"HILFSKESSELSOLL", FREQ_10MIN, cm_fremdgeraet},  // 0x01d7 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_kessel_canb},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_kessel},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_manager},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_heizmodul},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_mischermodul_2},  // 0x01d8 et_dec_val
-    {"FUEHLER_1", FREQ_10MIN, cm_fremdgeraet},  // 0x01d8 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_kessel_canb},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_kessel},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_manager},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_heizmodul},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_mischermodul_2},  // 0x01d9 et_dec_val
-    {"FUEHLER_2", FREQ_10MIN, cm_fremdgeraet},  // 0x01d9 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_kessel},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_manager},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x01e8 et_dec_val
-    {"MAX_HEIZUNG_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x01e8 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_heizmodul_wpl},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_kessel_canb},  // 0x01d4 et_dec_val
+    {"QUELLE_IST", FREQ_10MIN, cm_fet},  // 0x01d4 et_dec_val
 
     // ---- Block 0x002xx ----
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_kessel_canb},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_kessel},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_manager},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_heizmodul},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_mischermodul_2},  // 0x025c et_dec_val
-    {"VORLAUFSOLL_GEBLAESE", FREQ_10MIN, cm_fremdgeraet},  // 0x025c et_dec_val
-    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_kessel_canb},  // 0x025d et_dec_val
-    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x025d et_dec_val
     {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_kessel},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_atez},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_bedienmodul_1},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_bedienmodul_2},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_bedienmodul_3},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_bedienmodul_4},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_raumfernfuehler},  // 0x025d et_dec_val
     {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_manager},  // 0x025d et_dec_val
     {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_heizmodul},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_buskoppler},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_mischermodul_1},  // 0x025d et_dec_val
     {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_mischermodul_2},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_mischermodul_3},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_mischermodul_4},  // 0x025d et_dec_val
     {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_fremdgeraet},  // 0x025d et_dec_val
-    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_kessel_canb},  // 0x025e et_dec_val
-    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x025e et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_kessel_canb},  // 0x025d et_dec_val
+    {"RAUMSOLL_GEBLAESE", FREQ_10MIN, cm_fet},  // 0x025d et_dec_val
     {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_kessel},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_atez},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_bedienmodul_1},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_bedienmodul_2},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_bedienmodul_3},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_bedienmodul_4},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_raumfernfuehler},  // 0x025e et_dec_val
     {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_manager},  // 0x025e et_dec_val
     {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_heizmodul},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_buskoppler},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_mischermodul_1},  // 0x025e et_dec_val
     {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_mischermodul_2},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_mischermodul_3},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_mischermodul_4},  // 0x025e et_dec_val
     {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_fremdgeraet},  // 0x025e et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_kessel_canb},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_kessel},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_manager},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_heizmodul},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_mischermodul_2},  // 0x0260 et_dec_val
-    {"VORLAUFSOLL_FLAECHE", FREQ_10MIN, cm_fremdgeraet},  // 0x0260 et_dec_val
-    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_kessel_canb},  // 0x0261 et_dec_val
-    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0261 et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_kessel_canb},  // 0x025e et_dec_val
+    {"HYSTERESE_GEBLAESE", FREQ_10MIN, cm_fet},  // 0x025e et_dec_val
     {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_kessel},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_atez},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_bedienmodul_1},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_bedienmodul_2},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_bedienmodul_3},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_bedienmodul_4},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_raumfernfuehler},  // 0x0261 et_dec_val
     {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_manager},  // 0x0261 et_dec_val
     {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_heizmodul},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_buskoppler},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_mischermodul_1},  // 0x0261 et_dec_val
     {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_mischermodul_2},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_mischermodul_3},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_mischermodul_4},  // 0x0261 et_dec_val
     {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_fremdgeraet},  // 0x0261 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_kessel},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_manager},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0264 et_dec_val
-    {"TAUPUNKT_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0264 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_kessel},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_manager},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_heizmodul},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x0265 et_dec_val
-    {"HEISSGAS_TEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x0265 et_dec_val
-    {"WW_ECO", FREQ_10MIN, cm_kessel_canb},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_heizmodul_wpl},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_kessel},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_manager},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_heizmodul},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_mischermodul_2},  // 0x027e et_bool
-    {"WW_ECO", FREQ_10MIN, cm_fremdgeraet},  // 0x027e et_bool
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_kessel},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_manager},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_mischermodul_2},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_KWH", FREQ_10MIN, cm_fremdgeraet},  // 0x02e7 et_double_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_kessel},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_manager},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_heizmodul},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_mischermodul_2},  // 0x02e8 et_triple_val
-    {"SOLAR_WOCHENERTRAG_MWH", FREQ_10MIN, cm_fremdgeraet},  // 0x02e8 et_triple_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_kessel},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_manager},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_mischermodul_2},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_KWH", FREQ_10MIN, cm_fremdgeraet},  // 0x02ea et_double_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_kessel},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_manager},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_heizmodul},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_mischermodul_2},  // 0x02eb et_triple_val
-    {"SOLAR_JAHRESERTRAG_MWH", FREQ_10MIN, cm_fremdgeraet},  // 0x02eb et_triple_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_kessel_canb},  // 0x0261 et_dec_val
+    {"RAUMSOLL_FLAECHE", FREQ_10MIN, cm_fet},  // 0x0261 et_dec_val
 
     // ---- Block 0x003xx ----
-    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x03b0 et_double_val
-    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_kessel},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_atez},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_bedienmodul_1},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_bedienmodul_2},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_bedienmodul_3},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_bedienmodul_4},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_raumfernfuehler},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_manager},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_buskoppler},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_mischermodul_1},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_mischermodul_2},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_mischermodul_3},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_mischermodul_4},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_fremdgeraet},  // 0x03b0 et_double_val
-    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x03b6 et_double_val
-    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x03b0 et_double_val
+    {"WAERMEERTRAG_RUECKGE_TAG_KWH", FREQ_10MIN, cm_fet},  // 0x03b0 et_double_val
     {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_kessel},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_atez},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_bedienmodul_1},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_bedienmodul_2},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_bedienmodul_3},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_bedienmodul_4},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_raumfernfuehler},  // 0x03b6 et_double_val
     {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_manager},  // 0x03b6 et_double_val
     {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_heizmodul},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_buskoppler},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_mischermodul_1},  // 0x03b6 et_double_val
     {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_mischermodul_2},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_mischermodul_3},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_mischermodul_4},  // 0x03b6 et_double_val
     {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_fremdgeraet},  // 0x03b6 et_double_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_kessel},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_manager},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_heizmodul},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x03bc et_dec_val
-    {"SOLAR_KOLLEKTORSCHUTZTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x03bc et_dec_val
-
-    // ---- Block 0x005xx ----
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_kessel},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_manager},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_heizmodul},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x05bd et_bool
-    {"ABTAUEN_LL_WT_AKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x05bd et_bool
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x03b6 et_double_val
+    {"WAERMEERTRAG_RUECKGE_SUMME_MWH", FREQ_10MIN, cm_fet},  // 0x03b6 et_double_val
 
     // ---- Block 0x006xx ----
-    {"AUSLEGUNGSTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x0665 et_dec_val
-    {"AUSLEGUNGSTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0665 et_dec_val
-    {"AUSLEGUNGSTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x0665 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_kessel},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_atez},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_bedienmodul_1},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_bedienmodul_2},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_bedienmodul_3},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_bedienmodul_4},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_raumfernfuehler},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_manager},  // 0x0666 et_dec_val
     {"WAERMEBEDARF", FREQ_10MIN, cm_heizmodul},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_buskoppler},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_mischermodul_1},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_mischermodul_2},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_mischermodul_3},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_mischermodul_4},  // 0x0666 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_fremdgeraet},  // 0x0666 et_dec_val
     {"WAERMEBEDARF", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0666 et_dec_val
     {"WAERMEBEDARF", FREQ_10MIN, cm_kessel_canb},  // 0x0666 et_dec_val
-    {"SPANNUNG_INVERTER", FREQ_10MIN, cm_heizmodul},  // 0x06b1 et_dec_val
-    {"SPANNUNG_INVERTER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x06b1 et_dec_val
-    {"SPANNUNG_INVERTER", FREQ_10MIN, cm_kessel_canb},  // 0x06b1 et_dec_val
-    {"STROM_INVERTER", FREQ_10MIN, cm_heizmodul},  // 0x06b2 et_dec_val
-    {"STROM_INVERTER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x06b2 et_dec_val
-    {"STROM_INVERTER", FREQ_10MIN, cm_kessel_canb},  // 0x06b2 et_dec_val
-    {"STROM_MOTOR", FREQ_10MIN, cm_heizmodul},  // 0x06b4 et_dec_val
-    {"STROM_MOTOR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x06b4 et_dec_val
-    {"STROM_MOTOR", FREQ_10MIN, cm_kessel_canb},  // 0x06b4 et_dec_val
+    {"WAERMEBEDARF", FREQ_10MIN, cm_fet},  // 0x0666 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_kessel},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_atez},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_manager},  // 0x06d9 et_dec_val
     {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_heizmodul},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_buskoppler},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x06d9 et_dec_val
     {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x06d9 et_dec_val
     {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x06d9 et_dec_val
+    {"VERDICHTER_EINTRITTSTEMP", FREQ_10MIN, cm_fet},  // 0x06d9 et_dec_val
 
     // ---- Block 0x007xx ----
-    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x07a6 et_dec_val
-    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07a6 et_dec_val
     {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_kessel},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_atez},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_bedienmodul_1},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_bedienmodul_2},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_bedienmodul_3},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_bedienmodul_4},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_raumfernfuehler},  // 0x07a6 et_dec_val
     {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_manager},  // 0x07a6 et_dec_val
     {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_heizmodul},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_buskoppler},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_mischermodul_1},  // 0x07a6 et_dec_val
     {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_mischermodul_2},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_mischermodul_3},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_mischermodul_4},  // 0x07a6 et_dec_val
     {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_fremdgeraet},  // 0x07a6 et_dec_val
-    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x07a7 et_dec_val
-    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07a7 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x07a6 et_dec_val
+    {"ANZEIGE_HOCHDRUCK", FREQ_10MIN, cm_fet},  // 0x07a6 et_dec_val
     {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_kessel},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_atez},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_bedienmodul_1},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_bedienmodul_2},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_bedienmodul_3},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_bedienmodul_4},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_raumfernfuehler},  // 0x07a7 et_dec_val
     {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_manager},  // 0x07a7 et_dec_val
     {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_heizmodul},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_buskoppler},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_mischermodul_1},  // 0x07a7 et_dec_val
     {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_mischermodul_2},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_mischermodul_3},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_mischermodul_4},  // 0x07a7 et_dec_val
     {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_fremdgeraet},  // 0x07a7 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_kessel_canb},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_kessel},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_manager},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_heizmodul},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_mischermodul_2},  // 0x07a8 et_dec_val
-    {"VERDICHTER", FREQ_10MIN, cm_fremdgeraet},  // 0x07a8 et_dec_val
-    {"LZ_VERD_1_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x07fc et_mil_val
-    {"LZ_VERD_1_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07fc et_mil_val
-    {"LZ_VERD_2_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x07fd et_mil_val
-    {"LZ_VERD_2_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07fd et_mil_val
-    {"LZ_VERD_1_2_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x07fe et_mil_val
-    {"LZ_VERD_1_2_HEIZBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07fe et_mil_val
-    {"LZ_VERD_1_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x07ff et_mil_val
-    {"LZ_VERD_1_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07ff et_mil_val
-
-    // ---- Block 0x008xx ----
-    {"LZ_VERD_2_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x0800 et_mil_val
-    {"LZ_VERD_2_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0800 et_mil_val
-    {"LZ_VERD_1_2_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0x0801 et_mil_val
-    {"LZ_VERD_1_2_KUEHLBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0801 et_mil_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_kessel_canb},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_kessel},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_manager},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_heizmodul},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_mischermodul_2},  // 0x0822 et_dec_val
-    {"VORLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_fremdgeraet},  // 0x0822 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_kessel_canb},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_kessel},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_manager},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_heizmodul},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_mischermodul_2},  // 0x0823 et_dec_val
-    {"RUECKLAUFISTTEMP_WP_IWS", FREQ_10MIN, cm_fremdgeraet},  // 0x0823 et_dec_val
-
-    // ---- Block 0x009xx ----
-    {"EL_AUFNAHMELEISTUNG_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x091b et_double_val
-    {"EL_AUFNAHMELEISTUNG_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x091b et_double_val
-    {"EL_AUFNAHMELEISTUNG_WW_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x091b et_double_val
-    {"EL_AUFNAHMELEISTUNG_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x091d et_double_val
-    {"EL_AUFNAHMELEISTUNG_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x091d et_double_val
-    {"EL_AUFNAHMELEISTUNG_WW_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x091d et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x091f et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x091f et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x091f et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x0921 et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0921 et_double_val
-    {"EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x0921 et_double_val
-    {"WAERMEERTRAG_2WE_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x0923 et_double_val
-    {"WAERMEERTRAG_2WE_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0923 et_double_val
-    {"WAERMEERTRAG_2WE_WW_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x0923 et_double_val
-    {"WAERMEERTRAG_2WE_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x0925 et_double_val
-    {"WAERMEERTRAG_2WE_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0925 et_double_val
-    {"WAERMEERTRAG_2WE_WW_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x0925 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x0927 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0927 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x0927 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x0929 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0929 et_double_val
-    {"WAERMEERTRAG_2WE_HEIZ_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x0929 et_double_val
-    {"WAERMEERTRAG_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x092b et_double_val
-    {"WAERMEERTRAG_WW_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x092b et_double_val
-    {"WAERMEERTRAG_WW_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x092b et_double_val
-    {"WAERMEERTRAG_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x092d et_double_val
-    {"WAERMEERTRAG_WW_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x092d et_double_val
-    {"WAERMEERTRAG_WW_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x092d et_double_val
-    {"WAERMEERTRAG_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul},  // 0x092f et_double_val
-    {"WAERMEERTRAG_HEIZ_TAG_KWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x092f et_double_val
-    {"WAERMEERTRAG_HEIZ_TAG_KWH", FREQ_10MIN, cm_kessel_canb},  // 0x092f et_double_val
-    {"WAERMEERTRAG_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul},  // 0x0931 et_double_val
-    {"WAERMEERTRAG_HEIZ_SUM_MWH", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0931 et_double_val
-    {"WAERMEERTRAG_HEIZ_SUM_MWH", FREQ_10MIN, cm_kessel_canb},  // 0x0931 et_double_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x07a7 et_dec_val
+    {"ANZEIGE_NIEDERDRUCK", FREQ_10MIN, cm_fet},  // 0x07a7 et_dec_val
 
     // ---- Block 0x00axx ----
-    {"AUSSEN_FROSTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0a00 et_dec_val
-    {"AUSSEN_FROSTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0a00 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_kessel},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_atez},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_bedienmodul_1},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_bedienmodul_2},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_bedienmodul_3},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_bedienmodul_4},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_raumfernfuehler},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_manager},  // 0x0a06 et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_heizmodul},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_buskoppler},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_mischermodul_1},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_mischermodul_2},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_mischermodul_3},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_mischermodul_4},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_fremdgeraet},  // 0x0a06 et_dec_val
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0a06 et_dec_val
     {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_kessel_canb},  // 0x0a06 et_dec_val
-    {"FROSTSCHUTZTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x0a36 et_dec_val
-    {"FROSTSCHUTZTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x0a36 et_dec_val
-    {"VERFLUESSIGER_TEMP_WPL", FREQ_10MIN, cm_heizmodul},  // 0x0a37 et_dec_val
-    {"VERFLUESSIGER_TEMP_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x0a37 et_dec_val
-    {"OELSUMPFTEMP", FREQ_10MIN, cm_heizmodul},  // 0x0a39 et_dec_val
-    {"OELSUMPFTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x0a39 et_dec_val
-
-    // ---- Block 0x00bxx ----
-    {"FEHLERFELD_5", FREQ_10MIN, cm_kessel_canb},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_kessel},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_manager},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_heizmodul},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_mischermodul_2},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_5", FREQ_10MIN, cm_fremdgeraet},  // 0x0b05 et_dev_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_kessel_canb},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_kessel},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_manager},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_heizmodul},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_mischermodul_2},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_6", FREQ_10MIN, cm_fremdgeraet},  // 0x0b06 et_err_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_kessel_canb},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_kessel},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_manager},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_heizmodul},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_mischermodul_2},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_12", FREQ_10MIN, cm_fremdgeraet},  // 0x0b0c et_dev_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_kessel_canb},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_kessel},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_manager},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_heizmodul},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_mischermodul_2},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_13", FREQ_10MIN, cm_fremdgeraet},  // 0x0b0d et_err_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_kessel_canb},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_kessel},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_manager},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_heizmodul},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_mischermodul_2},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_19", FREQ_10MIN, cm_fremdgeraet},  // 0x0b13 et_dev_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_kessel_canb},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_kessel},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_manager},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_heizmodul},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_mischermodul_2},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_20", FREQ_10MIN, cm_fremdgeraet},  // 0x0b14 et_err_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_kessel_canb},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_kessel},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_manager},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_heizmodul},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_mischermodul_2},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_26", FREQ_10MIN, cm_fremdgeraet},  // 0x0b1a et_dev_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_kessel_canb},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_kessel},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_manager},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_heizmodul},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_mischermodul_2},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_27", FREQ_10MIN, cm_fremdgeraet},  // 0x0b1b et_err_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_kessel_canb},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_kessel},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_manager},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_heizmodul},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_mischermodul_2},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_33", FREQ_10MIN, cm_fremdgeraet},  // 0x0b21 et_dev_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_kessel_canb},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_kessel},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_manager},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_heizmodul},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_mischermodul_2},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_34", FREQ_10MIN, cm_fremdgeraet},  // 0x0b22 et_err_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_kessel_canb},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_kessel},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_manager},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_heizmodul},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_mischermodul_2},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_40", FREQ_10MIN, cm_fremdgeraet},  // 0x0b28 et_dev_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_kessel_canb},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_kessel},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_manager},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_heizmodul},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_mischermodul_2},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_41", FREQ_10MIN, cm_fremdgeraet},  // 0x0b29 et_err_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_kessel_canb},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_kessel},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_manager},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_heizmodul},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_mischermodul_2},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_47", FREQ_10MIN, cm_fremdgeraet},  // 0x0b2f et_dev_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_kessel_canb},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_kessel},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_manager},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_heizmodul},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_mischermodul_2},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_48", FREQ_10MIN, cm_fremdgeraet},  // 0x0b30 et_err_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_kessel_canb},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_kessel},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_manager},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_heizmodul},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_mischermodul_2},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_54", FREQ_10MIN, cm_fremdgeraet},  // 0x0b36 et_dev_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_kessel_canb},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_kessel},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_manager},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_heizmodul},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_mischermodul_2},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_55", FREQ_10MIN, cm_fremdgeraet},  // 0x0b37 et_err_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_kessel_canb},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_kessel},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_manager},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_heizmodul},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_mischermodul_2},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_61", FREQ_10MIN, cm_fremdgeraet},  // 0x0b3d et_dev_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_kessel_canb},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_kessel},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_manager},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_heizmodul},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_mischermodul_2},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_62", FREQ_10MIN, cm_fremdgeraet},  // 0x0b3e et_err_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_kessel_canb},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_kessel},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_manager},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_heizmodul},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_mischermodul_2},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_68", FREQ_10MIN, cm_fremdgeraet},  // 0x0b44 et_dev_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_kessel_canb},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_kessel},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_manager},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_heizmodul},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_mischermodul_2},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_69", FREQ_10MIN, cm_fremdgeraet},  // 0x0b45 et_err_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_kessel_canb},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_kessel},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_manager},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_heizmodul},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_mischermodul_2},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_75", FREQ_10MIN, cm_fremdgeraet},  // 0x0b4b et_dev_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_kessel_canb},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_kessel},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_manager},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_heizmodul},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_mischermodul_2},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_76", FREQ_10MIN, cm_fremdgeraet},  // 0x0b4c et_err_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_kessel_canb},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_kessel},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_manager},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_heizmodul},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_mischermodul_2},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_82", FREQ_10MIN, cm_fremdgeraet},  // 0x0b52 et_dev_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_kessel_canb},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_kessel},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_manager},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_heizmodul},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_mischermodul_2},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_83", FREQ_10MIN, cm_fremdgeraet},  // 0x0b53 et_err_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_kessel_canb},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_kessel},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_manager},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_heizmodul},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_mischermodul_2},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_89", FREQ_10MIN, cm_fremdgeraet},  // 0x0b59 et_dev_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_kessel_canb},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_kessel},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_manager},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_heizmodul},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_mischermodul_2},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_90", FREQ_10MIN, cm_fremdgeraet},  // 0x0b5a et_err_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_kessel_canb},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_kessel},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_manager},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_heizmodul},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_mischermodul_2},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_96", FREQ_10MIN, cm_fremdgeraet},  // 0x0b60 et_dev_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_kessel_canb},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_kessel},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_manager},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_heizmodul},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_mischermodul_2},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_97", FREQ_10MIN, cm_fremdgeraet},  // 0x0b61 et_err_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_kessel_canb},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_kessel},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_manager},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_heizmodul},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_mischermodul_2},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_103", FREQ_10MIN, cm_fremdgeraet},  // 0x0b67 et_dev_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_kessel_canb},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_kessel},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_manager},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_heizmodul},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_mischermodul_2},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_104", FREQ_10MIN, cm_fremdgeraet},  // 0x0b68 et_err_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_kessel_canb},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_kessel},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_manager},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_heizmodul},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_mischermodul_2},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_110", FREQ_10MIN, cm_fremdgeraet},  // 0x0b6e et_dev_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_kessel_canb},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_kessel},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_manager},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_heizmodul},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_mischermodul_2},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_111", FREQ_10MIN, cm_fremdgeraet},  // 0x0b6f et_err_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_kessel_canb},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_kessel},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_manager},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_heizmodul},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_mischermodul_2},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_117", FREQ_10MIN, cm_fremdgeraet},  // 0x0b75 et_dev_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_kessel_canb},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_kessel},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_manager},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_heizmodul},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_mischermodul_2},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_118", FREQ_10MIN, cm_fremdgeraet},  // 0x0b76 et_err_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_kessel_canb},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_kessel},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_manager},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_heizmodul},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_mischermodul_2},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_124", FREQ_10MIN, cm_fremdgeraet},  // 0x0b7c et_dev_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_kessel_canb},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_kessel},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_manager},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_heizmodul},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_mischermodul_2},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_125", FREQ_10MIN, cm_fremdgeraet},  // 0x0b7d et_err_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_kessel_canb},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_kessel},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_manager},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_heizmodul},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_mischermodul_2},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_131", FREQ_10MIN, cm_fremdgeraet},  // 0x0b83 et_dev_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_kessel_canb},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_kessel},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_manager},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_heizmodul},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_mischermodul_2},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_132", FREQ_10MIN, cm_fremdgeraet},  // 0x0b84 et_err_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_kessel_canb},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_kessel},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_manager},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_heizmodul},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_mischermodul_2},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_138", FREQ_10MIN, cm_fremdgeraet},  // 0x0b8a et_dev_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_kessel_canb},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_heizmodul_wpl},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_kessel},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_manager},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_heizmodul},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_mischermodul_2},  // 0x0b8b et_err_nr
-    {"FEHLERFELD_139", FREQ_10MIN, cm_fremdgeraet},  // 0x0b8b et_err_nr
-
-    // ---- Block 0x013xx ----
-    {"SCAN_AKTIV", FREQ_10MIN, cm_kessel_canb},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_heizmodul_wpl},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_kessel},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_manager},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_heizmodul},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_mischermodul_2},  // 0x13ef et_bool
-    {"SCAN_AKTIV", FREQ_10MIN, cm_fremdgeraet},  // 0x13ef et_bool
+    {"EINSTELL_SPEICHERSOLLTEMP2", FREQ_10MIN, cm_fet},  // 0x0a06 et_dec_val
 
     // ---- Block 0x04exx ----
-    {"SOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb0 et_dec_val
-    {"SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x4eb0 et_dec_val
     {"SOLLTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x4eb0 et_dec_val
-    {"ISTTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb4 et_dec_val
-    {"ISTTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb4 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb0 et_dec_val
+    {"SOLLTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x4eb0 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x4eb4 et_dec_val
     {"ISTTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x4eb4 et_dec_val
-    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb8 et_dec_val
-    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb8 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb4 et_dec_val
+    {"ISTTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x4eb4 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x4eb8 et_dec_val
     {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x4eb8 et_dec_val
-    {"ECOTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb9 et_dec_val
-    {"ECOTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb9 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb8 et_dec_val
+    {"KOMFORTTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x4eb8 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x4eb9 et_dec_val
     {"ECOTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x4eb9 et_dec_val
-    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4ec7 et_dec_val
-    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ec7 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4eb9 et_dec_val
+    {"ECOTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x4eb9 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_kessel},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_atez},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_bedienmodul_1},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_bedienmodul_2},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_bedienmodul_3},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_bedienmodul_4},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_raumfernfuehler},  // 0x4ec7 et_dec_val
     {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_manager},  // 0x4ec7 et_dec_val
-    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4ec8 et_dec_val
-    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ec8 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_heizmodul},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_buskoppler},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_mischermodul_1},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_mischermodul_2},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_mischermodul_3},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_mischermodul_4},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_fremdgeraet},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4ec7 et_dec_val
+    {"RAUMISTTEMP_WPL", FREQ_10MIN, cm_fet},  // 0x4ec7 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_kessel},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_atez},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_bedienmodul_1},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_bedienmodul_2},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_bedienmodul_3},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_bedienmodul_4},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_raumfernfuehler},  // 0x4ec8 et_dec_val
     {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_manager},  // 0x4ec8 et_dec_val
-    {"RAUMSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4ece et_dec_val
-    {"RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ece et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_heizmodul},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_buskoppler},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_mischermodul_1},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_mischermodul_2},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_mischermodul_3},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_mischermodul_4},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_fremdgeraet},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4ec8 et_dec_val
+    {"RAUMFEUCHTE_WPL", FREQ_10MIN, cm_fet},  // 0x4ec8 et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_atez},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x4ece et_dec_val
     {"RAUMSOLLTEMP", FREQ_10MIN, cm_manager},  // 0x4ece et_dec_val
-    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4ef9 et_dec_val
-    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ef9 et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_buskoppler},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4ece et_dec_val
+    {"RAUMSOLLTEMP", FREQ_10MIN, cm_fet},  // 0x4ece et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_kessel},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_atez},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_1},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_2},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_3},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_bedienmodul_4},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_raumfernfuehler},  // 0x4ef9 et_dec_val
     {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_manager},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_buskoppler},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_1},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_2},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_3},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_mischermodul_4},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_fremdgeraet},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_kessel_canb},  // 0x4ef9 et_dec_val
+    {"WW_SOLLTEMPERATUR", FREQ_10MIN, cm_fet},  // 0x4ef9 et_dec_val
 
     // ---- Block 0x04fxx ----
-    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_kessel_canb},  // 0x4f25 et_dec_val
-    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_kessel},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_atez},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f25 et_dec_val
     {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_manager},  // 0x4f25 et_dec_val
-    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_kessel_canb},  // 0x4f2b et_dec_val
-    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f2b et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_heizmodul},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_buskoppler},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_mischermodul_1},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_mischermodul_2},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_mischermodul_3},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_mischermodul_4},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_fremdgeraet},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_kessel_canb},  // 0x4f25 et_dec_val
+    {"WARMWASSERHYSTERESE", FREQ_10MIN, cm_fet},  // 0x4f25 et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_kessel},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_atez},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f2b et_dec_val
     {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_manager},  // 0x4f2b et_dec_val
-    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_kessel_canb},  // 0x4f40 et_dec_val
-    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f40 et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_heizmodul},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_buskoppler},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_mischermodul_1},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_mischermodul_2},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_mischermodul_3},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_mischermodul_4},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_fremdgeraet},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_kessel_canb},  // 0x4f2b et_dec_val
+    {"STEIGUNG_HEIZKURVE", FREQ_10MIN, cm_fet},  // 0x4f2b et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_kessel},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_atez},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f40 et_dec_val
     {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_manager},  // 0x4f40 et_dec_val
-    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel_canb},  // 0x4f41 et_dec_val
-    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_heizmodul},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_buskoppler},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_mischermodul_1},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_mischermodul_2},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_mischermodul_3},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_mischermodul_4},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_fremdgeraet},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_kessel_canb},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_NHZ", FREQ_10MIN, cm_fet},  // 0x4f40 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_atez},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f41 et_dec_val
     {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_manager},  // 0x4f41 et_dec_val
-    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel_canb},  // 0x4f43 et_dec_val
-    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f43 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_buskoppler},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_1},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_2},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_3},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_4},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_fremdgeraet},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel_canb},  // 0x4f41 et_dec_val
+    {"VORLAUFISTTEMP_WP", FREQ_10MIN, cm_fet},  // 0x4f41 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_atez},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f43 et_dec_val
     {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_manager},  // 0x4f43 et_dec_val
-    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4f44 et_dec_val
-    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f44 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_buskoppler},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_1},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_2},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_3},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_mischermodul_4},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_fremdgeraet},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_kessel_canb},  // 0x4f43 et_dec_val
+    {"RUECKLAUFISTTEMP_WP", FREQ_10MIN, cm_fet},  // 0x4f43 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_kessel},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_atez},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f44 et_dec_val
     {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_manager},  // 0x4f44 et_dec_val
-    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4f45 et_dec_val
-    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f45 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_heizmodul},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_buskoppler},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4f44 et_dec_val
+    {"KUEHLEN_ISTTEMP", FREQ_10MIN, cm_fet},  // 0x4f44 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_kessel},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_atez},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f45 et_dec_val
     {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_manager},  // 0x4f45 et_dec_val
-    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x4f46 et_cent_val
-    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f46 et_cent_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_heizmodul},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_buskoppler},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_mischermodul_1},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_mischermodul_2},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_mischermodul_3},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_mischermodul_4},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_fremdgeraet},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_kessel_canb},  // 0x4f45 et_dec_val
+    {"KUEHLEN_SOLLTEMP", FREQ_10MIN, cm_fet},  // 0x4f45 et_dec_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_kessel},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_atez},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f46 et_cent_val
     {"HEIZUNGSDRUCK", FREQ_10MIN, cm_manager},  // 0x4f46 et_cent_val
-    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4f47 et_cent_val
-    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f47 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_heizmodul},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_buskoppler},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_mischermodul_1},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_mischermodul_2},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_mischermodul_3},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_mischermodul_4},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_fremdgeraet},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_kessel_canb},  // 0x4f46 et_cent_val
+    {"HEIZUNGSDRUCK", FREQ_10MIN, cm_fet},  // 0x4f46 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_kessel},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_atez},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_bedienmodul_1},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_bedienmodul_2},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_bedienmodul_3},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_bedienmodul_4},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_raumfernfuehler},  // 0x4f47 et_cent_val
     {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_manager},  // 0x4f47 et_cent_val
-    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa6 et_dec_val
-    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa6 et_dec_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_heizmodul},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_buskoppler},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_mischermodul_1},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_mischermodul_2},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_mischermodul_3},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_mischermodul_4},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_fremdgeraet},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4f47 et_cent_val
+    {"VOLUMENSTROM_WPL", FREQ_10MIN, cm_fet},  // 0x4f47 et_cent_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_atez},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_1},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_2},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_3},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_4},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_raumfernfuehler},  // 0x4fa6 et_dec_val
     {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_manager},  // 0x4fa6 et_dec_val
-    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa7 et_dec_val
-    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa7 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_buskoppler},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_1},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_2},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_3},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_4},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_fremdgeraet},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa6 et_dec_val
+    {"RUECKLAUFTEMP_QUELLE", FREQ_10MIN, cm_fet},  // 0x4fa6 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_atez},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_1},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_2},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_3},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_bedienmodul_4},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_raumfernfuehler},  // 0x4fa7 et_dec_val
     {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_manager},  // 0x4fa7 et_dec_val
-    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4fa8 et_dec_val
-    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa8 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_buskoppler},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_1},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_2},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_3},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_mischermodul_4},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_fremdgeraet},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa7 et_dec_val
+    {"VORLAUFTEMP_QUELLE", FREQ_10MIN, cm_fet},  // 0x4fa7 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_kessel},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_atez},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_bedienmodul_1},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_bedienmodul_2},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_bedienmodul_3},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_bedienmodul_4},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_raumfernfuehler},  // 0x4fa8 et_dec_val
     {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_manager},  // 0x4fa8 et_dec_val
-    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa9 et_dec_val
-    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa9 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_heizmodul},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_buskoppler},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_mischermodul_1},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_mischermodul_2},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_mischermodul_3},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_mischermodul_4},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_fremdgeraet},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_kessel_canb},  // 0x4fa8 et_dec_val
+    {"QUELLENDRUCK_WPL", FREQ_10MIN, cm_fet},  // 0x4fa8 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_kessel},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_atez},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_bedienmodul_1},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_bedienmodul_2},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_bedienmodul_3},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_bedienmodul_4},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_raumfernfuehler},  // 0x4fa9 et_dec_val
     {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_manager},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_heizmodul},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_buskoppler},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_mischermodul_1},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_mischermodul_2},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_mischermodul_3},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_mischermodul_4},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_fremdgeraet},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_heizmodul_wpl},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_kessel_canb},  // 0x4fa9 et_dec_val
+    {"LEISTUNG_QUELLENPUMPE", FREQ_10MIN, cm_fet},  // 0x4fa9 et_dec_val
 
     // ---- Block 0x050xx ----
-    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x501d et_cent_val
-    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_kessel},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_atez},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_bedienmodul_1},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_bedienmodul_2},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_bedienmodul_3},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_bedienmodul_4},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_raumfernfuehler},  // 0x501d et_cent_val
     {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_manager},  // 0x501d et_cent_val
-    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x501e et_cent_val
-    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_heizmodul},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_buskoppler},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_mischermodul_1},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_mischermodul_2},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_mischermodul_3},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_mischermodul_4},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_fremdgeraet},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_heizmodul_wpl},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_kessel_canb},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_TAG", FREQ_10MIN, cm_fet},  // 0x501d et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_kessel},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_atez},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_bedienmodul_1},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_bedienmodul_2},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_bedienmodul_3},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_bedienmodul_4},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_raumfernfuehler},  // 0x501e et_cent_val
     {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_manager},  // 0x501e et_cent_val
-
-    // ---- Block 0x0c2xx ----
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_kessel_canb},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_heizmodul_wpl},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_kessel},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_manager},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_heizmodul},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_mischermodul_2},  // 0xc2c3 et_dec_val
-    {"OEFFNUNGSGRAD_BYPASSVENT", FREQ_10MIN, cm_fremdgeraet},  // 0xc2c3 et_dec_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_heizmodul},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_buskoppler},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_mischermodul_1},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_mischermodul_2},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_mischermodul_3},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_mischermodul_4},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_fremdgeraet},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_heizmodul_wpl},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_kessel_canb},  // 0x501e et_cent_val
+    {"HEIZEN_EFFIZIENZ_JAHR", FREQ_10MIN, cm_fet},  // 0x501e et_cent_val
 
     // ---- Block 0x0fdxx ----
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_kessel},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_atez},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdab et_little_endian
     {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_manager},  // 0xfdab et_little_endian
-    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0xfdab et_little_endian
     {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_heizmodul},  // 0xfdab et_little_endian
-    {"WP_EVU", FREQ_10MIN, cm_manager},  // 0xfdac et_little_endian
-    {"WP_EVU", FREQ_10MIN, cm_kessel_canb},  // 0xfdac et_little_endian
-    {"WP_EVU", FREQ_10MIN, cm_heizmodul},  // 0xfdac et_little_endian
-    {"WP_PUMPENSTATUS", FREQ_10MIN, cm_manager},  // 0xfdad et_little_endian
-    {"WP_PUMPENSTATUS", FREQ_10MIN, cm_kessel_canb},  // 0xfdad et_little_endian
-    {"WP_PUMPENSTATUS", FREQ_10MIN, cm_heizmodul},  // 0xfdad et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_buskoppler},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_mischermodul_1},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_mischermodul_2},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_mischermodul_3},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_mischermodul_4},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_fremdgeraet},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0xfdab et_little_endian
+    {"ZWEITER_WE_STATUS", FREQ_10MIN, cm_fet},  // 0xfdab et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_kessel},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_atez},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdae et_little_endian
     {"WP_STATUS", FREQ_10MIN, cm_manager},  // 0xfdae et_little_endian
-    {"WP_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0xfdae et_little_endian
     {"WP_STATUS", FREQ_10MIN, cm_heizmodul},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_buskoppler},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_mischermodul_1},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_mischermodul_2},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_mischermodul_3},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_mischermodul_4},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_fremdgeraet},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_kessel_canb},  // 0xfdae et_little_endian
+    {"WP_STATUS", FREQ_10MIN, cm_fet},  // 0xfdae et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_kessel},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_atez},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdaf et_little_endian
     {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_manager},  // 0xfdaf et_little_endian
-    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_kessel_canb},  // 0xfdaf et_little_endian
     {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_heizmodul},  // 0xfdaf et_little_endian
-    {"SCHALTWERKDYNAMIKZEIT", FREQ_10MIN, cm_manager},  // 0xfdb0 et_little_endian
-    {"SCHALTWERKDYNAMIKZEIT", FREQ_10MIN, cm_kessel_canb},  // 0xfdb0 et_little_endian
-    {"SCHALTWERKDYNAMIKZEIT", FREQ_10MIN, cm_heizmodul},  // 0xfdb0 et_little_endian
-    {"STILLSTANDZEIT", FREQ_10MIN, cm_manager},  // 0xfdb1 et_little_endian
-    {"STILLSTANDZEIT", FREQ_10MIN, cm_kessel_canb},  // 0xfdb1 et_little_endian
-    {"STILLSTANDZEIT", FREQ_10MIN, cm_heizmodul},  // 0xfdb1 et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_buskoppler},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_mischermodul_1},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_mischermodul_2},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_mischermodul_3},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_mischermodul_4},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_fremdgeraet},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_kessel_canb},  // 0xfdaf et_little_endian
+    {"DAUERLAUF_PUFFERLADEPUMPE", FREQ_10MIN, cm_fet},  // 0xfdaf et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_kessel},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_atez},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdb2 et_little_endian
     {"PUMPENZYKLEN", FREQ_10MIN, cm_manager},  // 0xfdb2 et_little_endian
-    {"PUMPENZYKLEN", FREQ_10MIN, cm_kessel_canb},  // 0xfdb2 et_little_endian
     {"PUMPENZYKLEN", FREQ_10MIN, cm_heizmodul},  // 0xfdb2 et_little_endian
-    {"GEBAEUDEART", FREQ_10MIN, cm_manager},  // 0xfdb3 et_little_endian
-    {"GEBAEUDEART", FREQ_10MIN, cm_kessel_canb},  // 0xfdb3 et_little_endian
-    {"GEBAEUDEART", FREQ_10MIN, cm_heizmodul},  // 0xfdb3 et_little_endian
-    {"SOMMERBETRIEB", FREQ_10MIN, cm_manager},  // 0xfdb4 et_bool
-    {"SOMMERBETRIEB", FREQ_10MIN, cm_kessel_canb},  // 0xfdb4 et_bool
-    {"SOMMERBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0xfdb4 et_bool
-    {"IMPULSRATE", FREQ_10MIN, cm_manager},  // 0xfdb6 et_little_endian
-    {"IMPULSRATE", FREQ_10MIN, cm_kessel_canb},  // 0xfdb6 et_little_endian
-    {"IMPULSRATE", FREQ_10MIN, cm_heizmodul},  // 0xfdb6 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_buskoppler},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_mischermodul_1},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_mischermodul_2},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_mischermodul_3},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_mischermodul_4},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_fremdgeraet},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_kessel_canb},  // 0xfdb2 et_little_endian
+    {"PUMPENZYKLEN", FREQ_10MIN, cm_fet},  // 0xfdb2 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_kessel},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_atez},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdb7 et_little_endian
     {"SOLARBETRIEB", FREQ_10MIN, cm_manager},  // 0xfdb7 et_little_endian
-    {"SOLARBETRIEB", FREQ_10MIN, cm_kessel_canb},  // 0xfdb7 et_little_endian
     {"SOLARBETRIEB", FREQ_10MIN, cm_heizmodul},  // 0xfdb7 et_little_endian
-    {"WAERMEMENGE", FREQ_10MIN, cm_manager},  // 0xfdb8 et_little_endian
-    {"WAERMEMENGE", FREQ_10MIN, cm_kessel_canb},  // 0xfdb8 et_little_endian
-    {"WAERMEMENGE", FREQ_10MIN, cm_heizmodul},  // 0xfdb8 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_buskoppler},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_mischermodul_1},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_mischermodul_2},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_mischermodul_3},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_mischermodul_4},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_fremdgeraet},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_kessel_canb},  // 0xfdb7 et_little_endian
+    {"SOLARBETRIEB", FREQ_10MIN, cm_fet},  // 0xfdb7 et_little_endian
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_kessel},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_atez},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdb9 et_little_bool
     {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_manager},  // 0xfdb9 et_little_bool
-    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_kessel_canb},  // 0xfdb9 et_little_bool
     {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_heizmodul},  // 0xfdb9 et_little_bool
-    {"WPSTUFEN_WW", FREQ_10MIN, cm_manager},  // 0xfdbb et_little_endian
-    {"WPSTUFEN_WW", FREQ_10MIN, cm_kessel_canb},  // 0xfdbb et_little_endian
-    {"WPSTUFEN_WW", FREQ_10MIN, cm_heizmodul},  // 0xfdbb et_little_endian
-    {"WW_MIT_2WE", FREQ_10MIN, cm_manager},  // 0xfdbc et_little_endian
-    {"WW_MIT_2WE", FREQ_10MIN, cm_kessel_canb},  // 0xfdbc et_little_endian
-    {"WW_MIT_2WE", FREQ_10MIN, cm_heizmodul},  // 0xfdbc et_little_endian
-    {"SPERREN_2WE", FREQ_10MIN, cm_manager},  // 0xfdbd et_little_endian
-    {"SPERREN_2WE", FREQ_10MIN, cm_kessel_canb},  // 0xfdbd et_little_endian
-    {"SPERREN_2WE", FREQ_10MIN, cm_heizmodul},  // 0xfdbd et_little_endian
-    {"FREIGABE_2WE", FREQ_10MIN, cm_manager},  // 0xfdbe et_little_endian
-    {"FREIGABE_2WE", FREQ_10MIN, cm_kessel_canb},  // 0xfdbe et_little_endian
-    {"FREIGABE_2WE", FREQ_10MIN, cm_heizmodul},  // 0xfdbe et_little_endian
-    {"DYNAMIK", FREQ_10MIN, cm_manager},  // 0xfdbf et_little_endian
-    {"DYNAMIK", FREQ_10MIN, cm_kessel_canb},  // 0xfdbf et_little_endian
-    {"DYNAMIK", FREQ_10MIN, cm_heizmodul},  // 0xfdbf et_little_endian
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_buskoppler},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_mischermodul_1},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_mischermodul_2},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_mischermodul_3},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_mischermodul_4},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_fremdgeraet},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_kessel_canb},  // 0xfdb9 et_little_bool
+    {"AUTOMATIK_WARMWASSER", FREQ_10MIN, cm_fet},  // 0xfdb9 et_little_bool
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_kessel},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_atez},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_bedienmodul_1},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_bedienmodul_2},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_bedienmodul_3},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_bedienmodul_4},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_raumfernfuehler},  // 0xfdc9 et_little_endian
     {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_manager},  // 0xfdc9 et_little_endian
-    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_kessel_canb},  // 0xfdc9 et_little_endian
     {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_heizmodul},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_buskoppler},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_mischermodul_1},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_mischermodul_2},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_mischermodul_3},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_mischermodul_4},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_fremdgeraet},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_heizmodul_wpl},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_kessel_canb},  // 0xfdc9 et_little_endian
+    {"BETRIEBSART_HZK_PUMPE", FREQ_10MIN, cm_fet},  // 0xfdc9 et_little_endian
 };
 
 extern const size_t SIGNAL_REQUEST_COUNT_VALUE = sizeof(signalRequests) / sizeof(SignalRequest);

@@ -85,8 +85,6 @@
 #define LNAME_ANTILEGIONELLEN_ZEITPUNKT        "Anti-Legionella Time"
 #undef  LNAME_HEIZKURVE
 #define LNAME_HEIZKURVE                        "Heating Curve"
-#undef  LNAME_NUM_HEIZKURVE
-#define LNAME_NUM_HEIZKURVE                    "Heating Curve Slope Setting"
 #undef  LNAME_PROGRAMMSCHALTER
 #define LNAME_PROGRAMMSCHALTER                 "Operating Mode"
 #undef  LNAME_TAG
@@ -212,13 +210,15 @@
 #undef  LNAME_CALC_CAN_STATE
 #define LNAME_CALC_CAN_STATE                   "CAN Bus State"
 #undef  LNAME_CALC_ENERGIE_HEIZ_TOTAL_KWH
-#define LNAME_CALC_ENERGIE_HEIZ_TOTAL_KWH      "Heating Energy Total kWh"
+#define LNAME_CALC_ENERGIE_HEIZ_TOTAL_KWH      "Heating Electrical Energy Total kWh"
 #undef  LNAME_CALC_ENERGIE_WW_TOTAL_KWH
-#define LNAME_CALC_ENERGIE_WW_TOTAL_KWH        "Hot Water Energy Total kWh"
+#define LNAME_CALC_ENERGIE_WW_TOTAL_KWH        "DHW Electrical Energy Total kWh"
 #undef  LNAME_CALC_WAERME_HEIZ_TOTAL_KWH
 #define LNAME_CALC_WAERME_HEIZ_TOTAL_KWH       "Heating Heat Output Total kWh"
 #undef  LNAME_CALC_WAERME_WW_TOTAL_KWH
-#define LNAME_CALC_WAERME_WW_TOTAL_KWH         "Hot Water Heat Output Total kWh"
+#define LNAME_CALC_WAERME_WW_TOTAL_KWH         "DHW Heat Output Total kWh"
+#undef  LNAME_CALC_EL_LEISTUNG_W
+#define LNAME_CALC_EL_LEISTUNG_W               "Current Electrical Power"
 
 // ============================================================================
 // Writable number friendly names

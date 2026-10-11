@@ -15,13 +15,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program. If not, see http://www.gnu.org/licenses/ .
 #
-
 esphome:
   name: heatingpump
   friendly_name: "Heating Pump CAN Interface"
   project:
     name: "bullitt186.ha-stiebel-control"
-    version: "2.1.0"
+    version: "2.1.1"
   on_boot:
     priority: 600
     then:
@@ -48,8 +47,8 @@ esphome:
     # model-specific signal_requests_*.h is declared by each model yaml package
   platformio_options:
     build_flags:
-      - "-DHA_DEVICE_MODEL='\"${device_model}\"'"
-      - "-DHA_LANGUAGE_${language}"
+      - '-DHA_DEVICE_MODEL=\"${device_model}\"'
+      - '-DHA_LANGUAGE_${language}'
 
 
 #########################################
@@ -167,29 +166,47 @@ mqtt:
             ESP_LOGI("MQTT_CMD", "All discoveries republished");
 
     # Temperature setpoint controls
+    # HINWEIS: EINSTELL_SPEICHERSOLLTEMP wird auf WPL17 (CAN-B) vom KESSEL_CANB
+    # (0x201) gehalten. Das writable number-Feld erscheint dort am KESSEL_CANB-Geraet
+    # und nutzt den Topic heatingpump/KESSEL_CANB/.../set. Fuer andere Modelle
+    # bleibt der MANAGER-Topic aktiv. Beide Topics werden abonniert.
+    - topic: heatingpump/KESSEL_CANB/EINSTELL_SPEICHERSOLLTEMP/set
+      then:
+        - lambda: |-
+            ESP_LOGI("MQTT_CMD", "Received EINSTELL_SPEICHERSOLLTEMP (Kessel CANB) command: %s", x.c_str());
+            publishWritableNumberDiscovery(writableNumbers[0]);
+            const char* value = x.c_str();
+            writeSignal(&CanMembers[cm_kessel_canb], "EINSTELL_SPEICHERSOLLTEMP", value);
+            readSignal(&CanMembers[cm_kessel_canb], "EINSTELL_SPEICHERSOLLTEMP");
+
     - topic: heatingpump/MANAGER/EINSTELL_SPEICHERSOLLTEMP/set
       then:
         - lambda: |-
             ESP_LOGI("MQTT_CMD", "Received EINSTELL_SPEICHERSOLLTEMP command: %s", x.c_str());
-            // Ensure discovery is published
             publishWritableNumberDiscovery(writableNumbers[0]);
-            // Write to CAN bus
             const char* value = x.c_str();
-            writeSignal(&CanMembers[cm_manager], "EINSTELL_SPEICHERSOLLTEMP", value);
-            // Read back to update state
-            readSignal(&CanMembers[cm_manager], "EINSTELL_SPEICHERSOLLTEMP");
+            const CanMember* target = (strcmp(HA_DEVICE_MODEL, "wpl17") == 0) ? &CanMembers[cm_kessel_canb] : &CanMembers[cm_manager];
+            writeSignal(target, "EINSTELL_SPEICHERSOLLTEMP", value);
+            readSignal(target, "EINSTELL_SPEICHERSOLLTEMP");
+
+    - topic: heatingpump/KESSEL_CANB/EINSTELL_SPEICHERSOLLTEMP2/set
+      then:
+        - lambda: |-
+            ESP_LOGI("MQTT_CMD", "Received EINSTELL_SPEICHERSOLLTEMP2 (Kessel CANB) command: %s", x.c_str());
+            publishWritableNumberDiscovery(writableNumbers[1]);
+            const char* value = x.c_str();
+            writeSignal(&CanMembers[cm_kessel_canb], "EINSTELL_SPEICHERSOLLTEMP2", value);
+            readSignal(&CanMembers[cm_kessel_canb], "EINSTELL_SPEICHERSOLLTEMP2");
 
     - topic: heatingpump/MANAGER/EINSTELL_SPEICHERSOLLTEMP2/set
       then:
         - lambda: |-
             ESP_LOGI("MQTT_CMD", "Received EINSTELL_SPEICHERSOLLTEMP2 command: %s", x.c_str());
-            // Ensure discovery is published
             publishWritableNumberDiscovery(writableNumbers[1]);
-            // Write to CAN bus
             const char* value = x.c_str();
-            writeSignal(&CanMembers[cm_manager], "EINSTELL_SPEICHERSOLLTEMP2", value);
-            // Read back to update state
-            readSignal(&CanMembers[cm_manager], "EINSTELL_SPEICHERSOLLTEMP2");
+            const CanMember* target = (strcmp(HA_DEVICE_MODEL, "wpl17") == 0) ? &CanMembers[cm_kessel_canb] : &CanMembers[cm_manager];
+            writeSignal(target, "EINSTELL_SPEICHERSOLLTEMP2", value);
+            readSignal(target, "EINSTELL_SPEICHERSOLLTEMP2");
 
     # Operating mode control
     - topic: heatingpump/MANAGER/PROGRAMMSCHALTER/set
@@ -312,8 +329,6 @@ mqtt:
             writeSignal(&CanMembers[cm_manager], "RAUMSOLLTEMP_NACHT", value);
             readSignal(&CanMembers[cm_manager], "RAUMSOLLTEMP_NACHT");
 
-    # Heizkurve (Steigung) — nur relevant auf CAN-B (WPL17). Command-Topic passt zur
-    # writableNumbers[8]-Discovery (cm_kessel_canb -> "heatingpump/KESSEL_CANB/HEIZKURVE/set").
     - topic: heatingpump/KESSEL_CANB/HEIZKURVE/set
       then:
         - lambda: |-
@@ -457,7 +472,7 @@ button:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  use_address: 192.168.30.107  # production device IP for OTA
+  use_address: 192.168.179.60  # production device IP for OTA
   fast_connect: true
   power_save_mode: none
   reboot_timeout: 5min
@@ -520,7 +535,7 @@ sensor:
       return ((dBm - MIN_DBM) / (MAX_DBM - MIN_DBM)) * 100;
 
   # -----------------------------------------------------------------------
-  # COP energy accumulator sensors (universal — present on all Elster models)
+  # COP energy accumulator sensors (universal - present on all Elster models)
   # -----------------------------------------------------------------------
   - platform: template
     name: "EL_AUFNAHMELEISTUNG_HEIZ_SUM"
@@ -629,7 +644,7 @@ sensor:
     device_class: "power_factor"
     accuracy_decimals: 2
 
-  # Operating mode and season sensors — used to trigger CAN reads
+  # Operating mode and season sensors - used to trigger CAN reads
   - platform: template
     name: "PROGRAMMSCHALTER"
     id: PROGRAMMSCHALTER

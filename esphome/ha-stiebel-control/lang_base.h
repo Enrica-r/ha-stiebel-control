@@ -119,6 +119,7 @@
 #define LNAME_CALC_ENERGIE_WW_TOTAL_KWH        "Energie Warmwasser Gesamt kWh"
 #define LNAME_CALC_WAERME_HEIZ_TOTAL_KWH       "Waerme Ertrag Heizung Gesamt kWh"
 #define LNAME_CALC_WAERME_WW_TOTAL_KWH         "Waerme Ertrag Warmwasser Gesamt kWh"
+#define LNAME_CALC_EL_LEISTUNG_W                "Aktuelle elektrische Leistung"
 
 // ============================================================================
 // Writable number friendly names (writableNumbers[])

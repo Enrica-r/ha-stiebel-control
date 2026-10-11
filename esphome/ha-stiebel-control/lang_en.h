@@ -219,6 +219,8 @@
 #define LNAME_CALC_WAERME_WW_TOTAL_KWH         "DHW Heat Output Total kWh"
 #undef  LNAME_CALC_EL_LEISTUNG_W
 #define LNAME_CALC_EL_LEISTUNG_W               "Current Electrical Power"
+#undef  LNAME_CALC_BETRIEBSSTATUS
+#define LNAME_CALC_BETRIEBSSTATUS              "Operating State"
 
 // ============================================================================
 // Writable number friendly names

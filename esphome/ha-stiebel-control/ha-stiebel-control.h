@@ -183,6 +183,12 @@ static const CalculatedSensorConfig calculatedSensors[] = {
     // die WP zaehlt ihren Stromverbrauch selbst.
     {"stiebel_calculated_el_leistung_w", LNAME_CALC_EL_LEISTUNG_W, "heatingpump/calculated/el_leistung_w/state",
      "sensor", "power", "W", "measurement", "mdi:lightning-bolt", "", "", "", true},
+
+    // Abgeleiteter Betriebsstatus: "Aus" | "Heizen" | "Warmwasser" | "Kuehlen".
+    // Ersetzt das (auf der WPL17 unbrauchbare) WP_STATUS-Bitfeld, siehe Ableitung in
+    // publishCombinedEnergySensors().
+    {"stiebel_calculated_betriebsstatus", LNAME_CALC_BETRIEBSSTATUS, "heatingpump/calculated/betriebsstatus/state",
+     "sensor", "", "", "", "mdi:heat-pump", "", "", "", true},
 };
 
 static const size_t CALCULATED_SENSOR_COUNT = sizeof(calculatedSensors) / sizeof(CalculatedSensorConfig);
@@ -803,10 +809,16 @@ void publishWritableNumberDiscovery(const WritableNumberConfig& config, bool for
             << "\"min\":" << config.min << ","
             << "\"max\":" << config.max << ","
             << "\"step\":" << config.step << ","
-            << "\"mode\":\"box\","
-            << "\"unit_of_measurement\":\"" << config.unit << "\","
-            << "\"device_class\":\"" << config.deviceClass << "\","
-            << "\"icon\":\"" << config.icon << "\",";
+            << "\"mode\":\"box\",";
+    // Nur nicht-leere optionale Felder senden: HA verwirft sonst die ganze
+    // Discovery (z. B. 'device_class':'' ist fuer 'number' ungueltig).
+    if (config.unit[0] != '\0') {
+        payload << "\"unit_of_measurement\":\"" << config.unit << "\",";
+    }
+    if (config.deviceClass[0] != '\0') {
+        payload << "\"device_class\":\"" << config.deviceClass << "\",";
+    }
+    payload << "\"icon\":\"" << config.icon << "\",";
     
     // Check if this is an SG Ready control - assign to main device
     bool isSgReady = (strncmp(config.signalName, "SG_READY_", 9) == 0);
@@ -1630,19 +1642,26 @@ void publishCombinedEnergySensors() {
         ESP_LOGI("ENERGIE", "Waerme Warmwasser Gesamt: %.3f kWh", total);
     }
 
-    // === AKTUELLE ELEKTRISCHE LEISTUNG (W) ===
-    // Abgeleitet aus den feinen Tageszaehlern EL_*_TAG_WH (1 Wh Aufloesung).
-    // Leistung = (Wh_neu - Wh_alt) / (t_neu - t_alt) * 3600 -> W.
-    // Die WP zaehlt ihren Stromverbrauch selbst — kein externer Stromzaehler noetig.
+    // === AKTUELLE ELEKTRISCHE LEISTUNG (W) + ABGELEITETER BETRIEBSSTATUS ===
+    // Beides aus den feinen Tageszaehlern EL_*_TAG_WH (1 Wh Aufloesung):
+    //  - Leistung = (Wh_neu - Wh_alt) / (t_neu - t_alt) * 3600 -> W
+    //  - Betriebsstatus: welcher der beiden getrennten Verbrauchszaehler steigt,
+    //    verraet den Betrieb (so trennt die WP selbst Heizen und Warmwasser).
+    //    Das WP_STATUS-Bitfeld des Geraets ist auf der WPL17 unbrauchbar (immer 0).
     if (copEnergyValues.find("EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH") != copEnergyValues.end() &&
         copEnergyValues.find("EL_AUFNAHMELEISTUNG_WW_TAG_WH") != copEnergyValues.end()) {
 
         static bool lastElPowerInit = false;
         static float lastElPowerWh = 0.0f;
+        static float lastHeizTagWh = 0.0f;
+        static float lastWwTagWh = 0.0f;
         static uint32_t lastElPowerMs = 0;
+        static const char* opState = "Aus";
+        static uint32_t opStateMs = 0;
 
-        float wh = copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH"] +
-                   copEnergyValues["EL_AUFNAHMELEISTUNG_WW_TAG_WH"];
+        float heizTagWh = copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH"];
+        float wwTagWh   = copEnergyValues["EL_AUFNAHMELEISTUNG_WW_TAG_WH"];
+        float wh = heizTagWh + wwTagWh;
         uint32_t nowMs = millis();
 
         if (lastElPowerInit) {
@@ -1656,9 +1675,40 @@ void publishCombinedEnergySensors() {
                 id(mqtt_client).publish("heatingpump/calculated/el_leistung_w/state", valueStr, strlen(valueStr), 0, true);
                 ESP_LOGI("ENERGIE", "Aktuelle elektrische Leistung: %.0f W (dWh=%.3f in %.0fs)", leistungW, dWh, dtSec);
             }
+
+            // Betriebsstatus (min. 30 s Verweildauer, um Flackern zu vermeiden)
+            if (dtSec >= 20.0f && dtSec < 900.0f) {
+                float dHeiz = heizTagWh - lastHeizTagWh; if (dHeiz < 0.0f) dHeiz = 0.0f; // Tageszaehler-Reset
+                float dWw   = wwTagWh   - lastWwTagWh;   if (dWw   < 0.0f) dWw   = 0.0f;
+                float pHeiz = dHeiz / dtSec * 3600.0f;
+                float pWw   = dWw   / dtSec * 3600.0f;
+                float pTot  = pHeiz + pWw;
+
+                const char* ns;
+                if (pTot < 50.0f) {
+                    ns = "Aus";
+                } else if (copEnergyValues.find("KUEHLZUSTAND") != copEnergyValues.end() &&
+                           copEnergyValues["KUEHLZUSTAND"] > 0.5f) {
+                    ns = "Kuehlen";
+                } else if (pWw > pHeiz) {
+                    ns = "Warmwasser";
+                } else {
+                    ns = "Heizen";
+                }
+
+                if (strcmp(ns, opState) != 0 && (opStateMs == 0 || (nowMs - opStateMs) >= 30000UL)) {
+                    opState = ns;
+                    opStateMs = nowMs;
+                    ESP_LOGI("STATUS", "Betriebsstatus: %s (PHeiz=%.0f W, PWw=%.0f W)", opState, pHeiz, pWw);
+                }
+                publishCalculatedSensorDiscovery(calculatedSensors[15], false);
+                id(mqtt_client).publish("heatingpump/calculated/betriebsstatus/state", opState, strlen(opState), 0, true);
+            }
         }
 
         lastElPowerWh = wh;
+        lastHeizTagWh = heizTagWh;
+        lastWwTagWh = wwTagWh;
         lastElPowerMs = nowMs;
         lastElPowerInit = true;
     }
@@ -1786,6 +1836,8 @@ constexpr uint32_t HASH_EL_AUFNAHMELEISTUNG_HEIZ_KWH = hash("EL_AUFNAHMELEISTUNG
 constexpr uint32_t HASH_EL_AUFNAHMELEISTUNG_WW_KWH = hash("EL_AUFNAHMELEISTUNG_WW_SUM_KWH");
 constexpr uint32_t HASH_WAERMEERTRAG_HEIZ_KWH = hash("WAERMEERTRAG_HEIZ_SUM_KWH");
 constexpr uint32_t HASH_WAERMEERTRAG_WW_KWH = hash("WAERMEERTRAG_WW_SUM_KWH");
+constexpr uint32_t HASH_EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH = hash("EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH");
+constexpr uint32_t HASH_EL_AUFNAHMELEISTUNG_WW_TAG_WH = hash("EL_AUFNAHMELEISTUNG_WW_TAG_WH");
 
 
 
@@ -1938,6 +1990,8 @@ void updateSensor(const CanMember &cm, const ElsterIndex *ei, const std::string 
         case HASH_EL_AUFNAHMELEISTUNG_WW_KWH:
         case HASH_WAERMEERTRAG_HEIZ_KWH:
         case HASH_WAERMEERTRAG_WW_KWH:
+        case HASH_EL_AUFNAHMELEISTUNG_HEIZ_TAG_WH:
+        case HASH_EL_AUFNAHMELEISTUNG_WW_TAG_WH:
             storeCOPEnergyValue(signalName, value);
             updateCOPCalculations();
             break;

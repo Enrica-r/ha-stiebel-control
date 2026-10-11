@@ -1511,6 +1511,72 @@ void updateCOPCalculations() {
     publishCombinedEnergySensors();
 }
 
+// ============================================================================
+// DEGLITCH FUER KOMBINIERTE ENERGIE-GESAMTWERTE
+// ============================================================================
+// Die Gesamtwerte werden als MWh*1000 + kWh berechnet. Die Einzelregister liegen
+// in einem nur nach Signalnamen geschluesselten Cache, daher koennen MWh und kWh
+// kurzzeitig von unterschiedlichen CAN-Membern stammen (oder einen ungueltigen
+// Marker wie 0x8000 -> 32768000 tragen). Das erzeugt transiente Spitzen von ca.
+// +/-1000 kWh (nachts, wenn das Register aktualisiert/umlaeuft) sowie kleinere.
+// Echte Energiezaehler wachsen nur, deshalb:
+//   - kleine, nicht sinkende Schritte werden sofort akzeptiert,
+//   - jede Verkleinerung oder ein Sprung > MAX_SMALL_STEP gilt als verdaechtig;
+//     der letzte gute Wert wird weiter gesendet, bis der neue Wert CONFIRM_MS
+//     lang stabil bleibt (ein Glitch verschwindet lange vorher).
+static bool sanitizeEnergyTotal(const char* key, float raw, float& out) {
+    static std::unordered_map<std::string, float> stableValue;    // zuletzt akzeptierter Wert
+    static std::unordered_map<std::string, float> pendingValue;   // verdaechtiger Kandidat
+    static std::unordered_map<std::string, unsigned long> pendingSince;
+
+    const float EPS = 0.5f;                     // Toleranz "gleicher Wert"
+    const float MAX_SMALL_STEP = 20.0f;         // normales Wachstum (kWh), sofort ok
+    const float TOL = 25.0f;                    // Naehe eines Kandidaten zu seiner Region
+    const unsigned long CONFIRM_MS = 900000UL;  // 15 min stabile Bestaetigung
+
+    // Klar ungueltige Marker (0x8000 -> 32768000, -255, ...) verwerfen
+    if (raw <= -1000.0f || raw >= 1000000.0f) {
+        auto s = stableValue.find(key);
+        if (s != stableValue.end()) { out = s->second; return false; }
+        return false;
+    }
+
+    auto it = stableValue.find(key);
+    if (it == stableValue.end()) {              // ersten Wert uebernehmen
+        stableValue[key] = raw;
+        out = raw;
+        return true;
+    }
+    const float last = it->second;
+
+    // Normales, nicht sinkendes Wachstum -> sofort akzeptieren
+    if (raw >= last - EPS && raw <= last + MAX_SMALL_STEP) {
+        stableValue[key] = raw;
+        pendingValue.erase(key);
+        pendingSince.erase(key);
+        out = raw;
+        return true;
+    }
+
+    // Verdaechtig: Verkleinerung oder grosser Sprung -> erst nach Stablezeit uebernehmen
+    auto p = pendingValue.find(key);
+    float diff = (p != pendingValue.end()) ? (p->second - raw) : 0.0f;
+    if (diff < 0.0f) diff = -diff;
+    if (p == pendingValue.end() || diff > TOL) {
+        pendingValue[key] = raw;
+        pendingSince[key] = millis();
+    } else if ((millis() - pendingSince[key]) >= CONFIRM_MS) {
+        stableValue[key] = raw;
+        pendingValue.erase(key);
+        pendingSince.erase(key);
+        out = raw;
+        return true;
+    }
+
+    out = last;   // letzten guten Wert weiter senden
+    return false;
+}
+
 // Publiziert kombinierte Gesamt-kWh-Werte aus den einzelnen MWh- und kWh-Registern.
 // Formel: Gesamt_kWh = MWh_Reg * 1000 + kWh_Reg
 // Die Einzelregister (MWh, kWh) werden weiterhin separat veroeffentlicht.
@@ -1518,7 +1584,9 @@ void publishCombinedEnergySensors() {
     // Energie (Stromaufnahme) Heizung Gesamt
     if (copEnergyValues.find("EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH") != copEnergyValues.end() &&
         copEnergyValues.find("EL_AUFNAHMELEISTUNG_HEIZ_SUM_KWH") != copEnergyValues.end()) {
-        float total = copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH"] * 1000.0f + copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_SUM_KWH"];
+        float rawTotal = copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_SUM_MWH"] * 1000.0f + copEnergyValues["EL_AUFNAHMELEISTUNG_HEIZ_SUM_KWH"];
+        float total;
+        sanitizeEnergyTotal("combined_energie_heiz", rawTotal, total);
         char valueStr[32];
         snprintf(valueStr, sizeof(valueStr), "%.3f", total);
         publishCalculatedSensorDiscovery(calculatedSensors[10], false);
@@ -1528,7 +1596,9 @@ void publishCombinedEnergySensors() {
     // Energie (Stromaufnahme) Warmwasser Gesamt
     if (copEnergyValues.find("EL_AUFNAHMELEISTUNG_WW_SUM_MWH") != copEnergyValues.end() &&
         copEnergyValues.find("EL_AUFNAHMELEISTUNG_WW_SUM_KWH") != copEnergyValues.end()) {
-        float total = copEnergyValues["EL_AUFNAHMELEISTUNG_WW_SUM_MWH"] * 1000.0f + copEnergyValues["EL_AUFNAHMELEISTUNG_WW_SUM_KWH"];
+        float rawTotal = copEnergyValues["EL_AUFNAHMELEISTUNG_WW_SUM_MWH"] * 1000.0f + copEnergyValues["EL_AUFNAHMELEISTUNG_WW_SUM_KWH"];
+        float total;
+        sanitizeEnergyTotal("combined_energie_ww", rawTotal, total);
         char valueStr[32];
         snprintf(valueStr, sizeof(valueStr), "%.3f", total);
         publishCalculatedSensorDiscovery(calculatedSensors[11], false);
@@ -1538,7 +1608,9 @@ void publishCombinedEnergySensors() {
     // Waerme Ertrag Heizung Gesamt
     if (copEnergyValues.find("WAERMEERTRAG_HEIZ_SUM_MWH") != copEnergyValues.end() &&
         copEnergyValues.find("WAERMEERTRAG_HEIZ_SUM_KWH") != copEnergyValues.end()) {
-        float total = copEnergyValues["WAERMEERTRAG_HEIZ_SUM_MWH"] * 1000.0f + copEnergyValues["WAERMEERTRAG_HEIZ_SUM_KWH"];
+        float rawTotal = copEnergyValues["WAERMEERTRAG_HEIZ_SUM_MWH"] * 1000.0f + copEnergyValues["WAERMEERTRAG_HEIZ_SUM_KWH"];
+        float total;
+        sanitizeEnergyTotal("combined_waerme_heiz", rawTotal, total);
         char valueStr[32];
         snprintf(valueStr, sizeof(valueStr), "%.3f", total);
         publishCalculatedSensorDiscovery(calculatedSensors[12], false);
@@ -1548,7 +1620,9 @@ void publishCombinedEnergySensors() {
     // Waerme Ertrag Warmwasser Gesamt
     if (copEnergyValues.find("WAERMEERTRAG_WW_SUM_MWH") != copEnergyValues.end() &&
         copEnergyValues.find("WAERMEERTRAG_WW_SUM_KWH") != copEnergyValues.end()) {
-        float total = copEnergyValues["WAERMEERTRAG_WW_SUM_MWH"] * 1000.0f + copEnergyValues["WAERMEERTRAG_WW_SUM_KWH"];
+        float rawTotal = copEnergyValues["WAERMEERTRAG_WW_SUM_MWH"] * 1000.0f + copEnergyValues["WAERMEERTRAG_WW_SUM_KWH"];
+        float total;
+        sanitizeEnergyTotal("combined_waerme_ww", rawTotal, total);
         char valueStr[32];
         snprintf(valueStr, sizeof(valueStr), "%.3f", total);
         publishCalculatedSensorDiscovery(calculatedSensors[13], false);

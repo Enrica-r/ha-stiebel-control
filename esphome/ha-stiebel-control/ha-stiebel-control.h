@@ -1529,7 +1529,7 @@ static bool sanitizeEnergyTotal(const char* key, float raw, float& out) {
     static std::unordered_map<std::string, float> pendingValue;   // verdaechtiger Kandidat
     static std::unordered_map<std::string, unsigned long> pendingSince;
 
-    const float EPS = 0.5f;                     // Toleranz "gleicher Wert"
+    const float TOL_EPS = 0.5f;                 // Toleranz "gleicher Wert"
     const float MAX_SMALL_STEP = 20.0f;         // normales Wachstum (kWh), sofort ok
     const float TOL = 25.0f;                    // Naehe eines Kandidaten zu seiner Region
     const unsigned long CONFIRM_MS = 900000UL;  // 15 min stabile Bestaetigung
@@ -1550,7 +1550,7 @@ static bool sanitizeEnergyTotal(const char* key, float raw, float& out) {
     const float last = it->second;
 
     // Normales, nicht sinkendes Wachstum -> sofort akzeptieren
-    if (raw >= last - EPS && raw <= last + MAX_SMALL_STEP) {
+    if (raw >= last - TOL_EPS && raw <= last + MAX_SMALL_STEP) {
         stableValue[key] = raw;
         pendingValue.erase(key);
         pendingSince.erase(key);
